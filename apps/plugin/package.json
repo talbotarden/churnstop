@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "wp-scripts build assets/admin/src/index.tsx --output-path=assets/admin/build && wp-scripts build assets/modal/src/modal.tsx --output-path=assets/modal/build",
-    "dev": "wp-scripts start assets/admin/src/index.tsx --output-path=assets/admin/build",
+    "build": "wp-scripts build",
+    "dev": "wp-scripts start",
     "lint": "wp-scripts lint-js assets/",
     "composer-install": "composer install",
     "test": "composer run test",

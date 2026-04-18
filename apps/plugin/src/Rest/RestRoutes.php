@@ -6,6 +6,7 @@ namespace ChurnStop\Rest;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Settings;
 use ChurnStop\Flow\FlowEngine;
+use ChurnStop\License\LicenseManager;
 
 /**
  * REST API endpoints consumed by the React admin UI.
@@ -15,8 +16,11 @@ final class RestRoutes {
 
 	private FlowEngine $flowEngine;
 
-	public function __construct( FlowEngine $flowEngine ) {
+	private LicenseManager $license;
+
+	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null ) {
 		$this->flowEngine = $flowEngine;
+		$this->license    = $license ?? new LicenseManager();
 	}
 
 	public function register(): void {
@@ -68,6 +72,45 @@ final class RestRoutes {
 					'callback'            => array( $this, 'updateSettings' ),
 					'permission_callback' => array( $this, 'permissionCheck' ),
 				),
+			)
+		);
+
+		// License endpoints. Restricted to manage_options (not manage_woocommerce)
+		// because license activation affects billing and should be an admin-level action.
+		register_rest_route(
+			'churnstop/v1',
+			'/license/status',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'licenseStatus' ),
+				'permission_callback' => array( $this, 'licensePermissionCheck' ),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/license/activate',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'licenseActivate' ),
+				'permission_callback' => array( $this, 'licensePermissionCheck' ),
+				'args'                => array(
+					'key' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/license/deactivate',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'licenseDeactivate' ),
+				'permission_callback' => array( $this, 'licensePermissionCheck' ),
 			)
 		);
 	}
@@ -175,5 +218,88 @@ final class RestRoutes {
 		);
 
 		return rest_ensure_response( $rows ?: array() );
+	}
+
+	/**
+	 * Build the license status payload the admin License screen consumes.
+	 * Always returns 200 with an "active" flag; the React screen decides
+	 * whether to show activation UI or deactivation UI based on that flag.
+	 */
+	public function licenseStatus(): \WP_REST_Response {
+		$entitlements = (array) get_option( LicenseManager::ENTITLEMENTS_OPTION, array() );
+		$active       = $this->license->isActive();
+
+		return rest_ensure_response(
+			array(
+				'active'    => $active,
+				'tier'      => $entitlements['tier'] ?? null,
+				'features'  => $entitlements['features'] ?? array(),
+				'seats'     => $entitlements['seats'] ?? null,
+				'renews_at' => $entitlements['renews_at'] ?? null,
+				'site_url'  => home_url(),
+			)
+		);
+	}
+
+	/**
+	 * Paste-and-activate license key handler. Delegates to LicenseManager,
+	 * which contacts api.churnstop.org, caches entitlements, and schedules
+	 * the background refresh event.
+	 */
+	public function licenseActivate( \WP_REST_Request $request ): \WP_REST_Response {
+		$key = (string) $request->get_param( 'key' );
+
+		if ( $key === '' ) {
+			return new \WP_REST_Response(
+				array(
+					'ok'      => false,
+					'message' => __( 'License key is required.', 'churnstop' ),
+				),
+				400
+			);
+		}
+
+		$result = $this->license->activate( $key );
+
+		if ( empty( $result['ok'] ) ) {
+			return new \WP_REST_Response(
+				array(
+					'ok'      => false,
+					'message' => $result['message'] ?? __( 'Activation failed.', 'churnstop' ),
+				),
+				422
+			);
+		}
+
+		// Return fresh status so the UI updates without a second round-trip.
+		$status = $this->licenseStatus();
+
+		return rest_ensure_response(
+			array(
+				'ok'     => true,
+				'status' => $status->get_data(),
+			)
+		);
+	}
+
+	/**
+	 * Clear the license locally. Does not revoke the key on the ChurnStop
+	 * backend; customers who want to re-activate on another site can paste
+	 * the same key there (subject to the tier's site cap).
+	 */
+	public function licenseDeactivate(): \WP_REST_Response {
+		$this->license->deactivate();
+		$status = $this->licenseStatus();
+
+		return rest_ensure_response(
+			array(
+				'ok'     => true,
+				'status' => $status->get_data(),
+			)
+		);
+	}
+
+	public function licensePermissionCheck(): bool {
+		return current_user_can( 'manage_options' );
 	}
 }

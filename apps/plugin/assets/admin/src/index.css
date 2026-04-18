@@ -209,3 +209,141 @@
 #churnstop-app .cs-compliance-notice strong {
   color: #0c4a6e;
 }
+
+/* ------------------ Logs screen ------------------ */
+
+#churnstop-app .cs-logs-filters {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-logs-count {
+  color: #6b7280;
+}
+
+#churnstop-app .cs-logs-preserved {
+  flex: 1;
+}
+
+#churnstop-app .cs-logs-preserved-label {
+  color: #6b7280;
+}
+
+#churnstop-app .cs-logs-preserved strong {
+  color: #059669;
+  font-variant-numeric: tabular-nums;
+}
+
+#churnstop-app .cs-logs-filters select {
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#churnstop-app .cs-logs-table th,
+#churnstop-app .cs-logs-table td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-logs-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+#churnstop-app .cs-logs-table tr:last-child td {
+  border-bottom: none;
+}
+
+#churnstop-app .cs-logs-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+
+/* ------------------ License screen ------------------ */
+
+#churnstop-app .cs-license-status {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+#churnstop-app .cs-license-active .cs-license-tier {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #0b6e4f;
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+#churnstop-app .cs-license-meta {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-license-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+#churnstop-app .cs-license-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+#churnstop-app .cs-license-none {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-license-inactive p:first-child {
+  margin: 0 0 4px 0;
+  font-weight: 500;
+  color: #374151;
+}
+
+#churnstop-app .cs-license-privacy {
+  background: #f9fafb;
+  border-left: 4px solid #0b6e4f;
+  padding: 12px 16px;
+  border-radius: 4px;
+}

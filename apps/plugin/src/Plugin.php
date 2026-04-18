@@ -47,7 +47,7 @@ final class Plugin {
 		// Register listeners.
 		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
 		( new Admin( $license, $flowEngine ) )->register();
-		( new RestRoutes( $flowEngine ) )->register();
+		( new RestRoutes( $flowEngine, $license ) )->register();
 
 		// Load translations.
 		add_action(

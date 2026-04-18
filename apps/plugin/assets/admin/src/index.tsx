@@ -6,6 +6,8 @@ import './index.css';
 import { Dashboard } from './screens/Dashboard';
 import { SettingsScreen } from './screens/Settings';
 import { Placeholder } from './screens/Placeholder';
+import { Logs } from './screens/Logs';
+import { License } from './screens/License';
 
 declare const ChurnStopAdmin: {
   apiUrl: string;
@@ -31,9 +33,9 @@ function App() {
     case 'churnstop-winback':
       return h(Placeholder, { title: 'Winback', body: 'Email sequences for customers who declined all offers. Paid tier feature.' });
     case 'churnstop-logs':
-      return h(Placeholder, { title: 'Logs', body: 'Full audit trail of every cancellation attempt with reason, offer shown, and outcome.' });
+      return h(Logs, null);
     case 'churnstop-license':
-      return h(Placeholder, { title: 'License', body: 'Paste your license key from churnstop.org to unlock paid features. Free tier works without a key.' });
+      return h(License, null);
     default:
       return h(Dashboard, null);
   }
