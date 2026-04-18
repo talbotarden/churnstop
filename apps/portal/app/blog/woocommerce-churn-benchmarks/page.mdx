@@ -1,0 +1,151 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getPost } from '@/lib/blog';
+import { site } from '@/lib/site';
+
+export const metadata = {
+  title: 'WooCommerce subscription churn benchmarks',
+  description:
+    'What a normal save rate looks like for subscription boxes, memberships, and SaaS-on-WooCommerce. Public benchmarks plus what we see across early ChurnStop installs.',
+  alternates: { canonical: '/blog/woocommerce-churn-benchmarks' },
+};
+
+{(() => {
+  const post = getPost('woocommerce-churn-benchmarks');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    publishedAt: post.publishedAt,
+    updatedAt: post.updatedAt ?? post.publishedAt,
+    authorName: post.author,
+    keywords: post.keywords,
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<div className="mx-auto max-w-3xl px-6 py-20">
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/blog" className="hover:text-[var(--fg)]">Blog</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>WooCommerce subscription churn benchmarks</span>
+</nav>
+
+<div className="eyebrow">Benchmarks · 9 min read · April 18, 2026</div>
+
+# WooCommerce subscription churn benchmarks: what a normal save rate looks like
+
+**Most WooCommerce subscription stores lose 4-7% of MRR to voluntary churn each month and another 1-3% to failed payments, for a combined churn rate of 5-10% monthly depending on category. Of the cancellation attempts a save flow intercepts, 20-35% can typically be recovered, with 30% being the middle of the range and 50%+ reserved for stores that have spent serious time on offer tuning.**
+
+That is the answer in one paragraph. The rest of this post is the sources and the category breakdown, because if you are going to pitch a save flow internally or to a client you will want the numbers that hold up to scrutiny, not a vibe.
+
+## The headline benchmarks
+
+The following numbers come from three sources: the 2024 Churnkey benchmarks report (SaaS and Shopify heavy, ~3,000 customers), the Recurly "State of Subscriptions 2024" report (e-commerce and media), and public ProsperStack case studies (SaaS and DTC).
+
+| Metric | Low-performing | Middle | Top decile |
+|---|---|---|---|
+| Voluntary churn per month | 8%+ | 4-7% | under 2% |
+| Involuntary churn per month | 3%+ | 1-3% | under 1% |
+| Save rate (of cancel attempts) | under 15% | 20-35% | 50%+ |
+| Recovered MRR from save flow | 0.5%+ | 1-2% | 3%+ |
+| Winback rate (day 7-60 after cancel) | 2% | 4-6% | 10%+ |
+
+Churnkey reports a 34% average save rate across its customer base in 2024. ProsperStack reports 10-39% voluntary churn reduction across its SaaS and e-commerce customers. The variation inside those ranges is mostly about offer-tuning effort, not the save-flow tool itself.
+
+## By WooCommerce category
+
+Numbers differ materially across WooCommerce subscription categories. A $10/mo comic subscription behaves nothing like a $200/mo managed hosting plan.
+
+### Subscription boxes
+
+Monthly churn: 6-12% (higher than SaaS; the category is notoriously leaky). The top reasons are "too busy to use it", "got bored", and "too much stuff piled up". These map well to pause offers - in our early data, pause saves 40%+ of attempts in this category, far more than discount.
+
+Typical save rate in this category with a decent flow: 35-45%. The ceiling is high because the cancel reasons are inherently reversible (life events, inventory backlog).
+
+### Membership sites and communities
+
+Monthly churn: 4-8%. Reasons skew toward "no longer need it" and "too expensive". Discount works on the price-sensitive segment; tier-down to a lighter membership often works on the "no longer need it" segment if the merchant has a lower tier.
+
+Typical save rate: 25-35%. The ceiling is lower because membership is often genuinely no-longer-relevant; there is no amount of offer that will retain someone whose underlying use case is gone.
+
+### SaaS-on-WooCommerce
+
+Monthly churn: 3-6% (lower than the other categories because the product is actively used if at all). Reasons split between "too expensive" (discount saves) and "switching to a competitor" (price match or tier-down saves).
+
+Typical save rate: 20-30%. SaaS customers are deliberate cancellers; they often have an evaluated alternative. Offers work but the ceiling is capped by the fact that these customers already have a replacement in mind.
+
+### Physical replenishment (supplements, coffee, pet food)
+
+Monthly churn: 5-9%. Reasons skew toward "too much supply" and "moving / life change". Skip-next-renewal is unusually effective here because the underlying issue is often temporary inventory pile-up, not a values change.
+
+Typical save rate: 40-55%. The highest category save-rate ceiling we see. Skip-renewal alone is frequently more valuable than discount + pause combined.
+
+## Why most WooCommerce stores underperform these benchmarks
+
+The default WooCommerce Subscriptions cancellation flow shows a plain "are you sure" page and cancels. There is no survey, no offer, no data. That produces an effective save rate of 0% - every customer who reaches the page cancels.
+
+Adding any save flow immediately shifts the number from 0% to the low end of the benchmark range. The move from 0% to 20% is almost free; the move from 20% to 40% requires tuning. The move from 40% to 60%+ requires A/B testing, per-reason offer customization, and a willingness to test uncomfortable things like larger discounts.
+
+Where most stores stop:
+
+1. **No save flow at all.** 0% save rate. Leaves 4-7% of MRR on the table every month.
+2. **Single-path flow with one offer.** 10-20% save rate. Better than nothing, but one-size-fits-all rarely clears the middle-benchmark bar.
+3. **Conditional flow with reason-matched offers, no A/B testing.** 20-35% save rate. This is where most mid-market WooCommerce stores plateau.
+4. **Conditional flow with active A/B testing.** 35-50%+. This is the part that takes real effort.
+
+Every additional question in the survey drops save rate by roughly 6.7% (Churnkey 2024 data). Keep it to one required question, maybe with an optional follow-up.
+
+## The math at $20k MRR
+
+Worked example. A WooCommerce store doing $20k monthly recurring revenue with 5% monthly voluntary churn loses $1,000 MRR to cancellation attempts each month before any save flow.
+
+| Save rate scenario | MRR preserved / month | MRR preserved / year |
+|---|---|---|
+| 0% (no save flow) | $0 | $0 |
+| 15% (single-path flow) | $150 | $1,800 |
+| 30% (conditional flow) | $300 | $3,600 |
+| 45% (A/B tested) | $450 | $5,400 |
+
+And that is just month one. Saved MRR compounds: a subscriber saved in January who stays for 18 months contributes 18x the single-month value. Over a full year of retention cohorts stacked, the delta between 0% and 30% on a $20k MRR store runs into the $40-60k range.
+
+## How to measure your own baseline
+
+Before optimising, know where you are. On any WooCommerce Subscriptions store:
+
+1. **Voluntary churn rate.** `cancellations_this_month / active_subscribers_start_of_month`. Pull from the `wc_subscriptions` table. Exclude involuntary cancellations (payment failures) by filtering on the cancel reason.
+2. **Implicit save rate.** If you have no save flow, this is 0% by definition. If you have one, count `attempts_this_month / saved_this_month`. A cancel attempt is any customer who landed on the cancel page (you will need tracking for this).
+3. **MRR preserved.** `monthly_value_sum(saved_subscriptions)` for the period.
+
+ChurnStop surfaces all three automatically once installed. If you are not using ChurnStop, the same numbers are available via a custom dashboard built on the `wcs_get_subscriptions` query - budget a day or two.
+
+## What these numbers do NOT tell you
+
+Benchmarks are a sanity check, not a strategy. A store doing 40% save rate in one category may be leaving 20 points on the table in another. A store doing 15% save rate on a reluctantly-retained segment may be making the right call - not every customer should be saved, and aggressive retention of already-unhappy customers produces refund requests, bad reviews, and chargebacks.
+
+Use these to answer "is my flow working at all" and "where is the obvious headroom". Do not use them to pick a target number and force it by stacking ever-larger discounts.
+
+## What's next
+
+- <Link href="/docs/offer-types">Offer types reference</Link> - map each cancel reason to the offer that typically wins.
+- <Link href="/pricing">Pricing</Link> - Starter and above unlock conditional branching and A/B testing, which is where you get past the 30% plateau.
+- <Link href="/click-to-cancel">Click-to-cancel compliance</Link> - every save-flow optimization ChurnStop ships is validated against the FTC rule before save.
+
+---
+
+*Sources: Churnkey 2024 Benchmarks Report · Recurly State of Subscriptions 2024 · ProsperStack published case studies · early ChurnStop install data (n under 20 as of April 2026; numbers will firm up in later drafts as the sample grows).*
+
+</div>

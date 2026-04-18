@@ -26,6 +26,7 @@ Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add cond
 ## Blog
 
 - [Blog index](https://churnstop.org/blog): Subscription retention, WooCommerce churn data, save-flow best practices, FTC click-to-cancel updates
+- [WooCommerce subscription churn benchmarks](https://churnstop.org/blog/woocommerce-churn-benchmarks): What a normal save rate looks like by category (subscription boxes 35-45%, memberships 25-35%, SaaS 20-30%, replenishment 40-55%), sourced from Churnkey 2024, Recurly 2024, and ProsperStack case studies. Includes the worked math at $20k MRR.
 
 ## About
 

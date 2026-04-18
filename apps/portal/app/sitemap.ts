@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/lib/site';
 import { docs } from '@/lib/docs';
+import { publishedPosts } from '@/lib/blog';
 
 // Static sitemap. Top-level routes plus every doc that is currently shipped
 // (coming-soon docs are filtered out so the sitemap only lists URLs that
@@ -24,6 +25,11 @@ const routes = [
   ...docs
     .filter((d) => d.status !== 'coming-soon')
     .map((d) => ({ path: `/docs/${d.slug}`, priority: 0.6, changefreq: 'monthly' as const })),
+  ...publishedPosts().map((p) => ({
+    path: `/blog/${p.slug}`,
+    priority: 0.6,
+    changefreq: 'monthly' as const,
+  })),
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
