@@ -1,0 +1,284 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getDoc } from '@/lib/docs';
+import { site } from '@/lib/site';
+
+export const metadata = {
+  title: 'API and hooks reference',
+  description:
+    'ChurnStop REST endpoints, WordPress actions, WordPress filters, and JSON payload shapes. Use these to pipe cancellation events into Segment, Mixpanel, Snowflake, or a custom warehouse.',
+  alternates: { canonical: '/docs/api' },
+};
+
+{(() => {
+  const doc = getDoc('api');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Docs', path: '/docs' },
+    { name: doc.title, path: `/docs/${doc.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: 'API and hooks reference',
+    description: doc.description,
+    slug: `docs/${doc.slug}`,
+    publishedAt: '2026-04-18',
+    updatedAt: '2026-04-18',
+    authorName: 'ChurnStop',
+    keywords: ['ChurnStop REST API', 'WordPress action hook', 'WooCommerce cancellation event', 'save flow webhook'],
+  });
+  article['@id'] = `${site.url}/docs/${doc.slug}/#article`;
+  article.url = `${site.url}/docs/${doc.slug}`;
+  article.mainEntityOfPage = { '@type': 'WebPage', '@id': `${site.url}/docs/${doc.slug}` };
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/docs" className="hover:text-[var(--fg)]">Docs</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>API reference</span>
+</nav>
+
+<div className="eyebrow">Reference · 10 min read</div>
+
+# API and hooks reference
+
+This page documents every surface through which ChurnStop exposes cancellation-event data: the REST endpoints served by the plugin itself, the WordPress action / filter hooks, and the payload shapes. All surfaces are stable and versioned; breaking changes require a major-version bump of the plugin.
+
+The API that lives at `api.churnstop.org` is for the paid-tier license and benchmark backend and is documented separately. This page covers the in-WordPress surface.
+
+## REST endpoints
+
+All endpoints are namespaced under `/wp-json/churnstop/v1/`. All endpoints require `manage_woocommerce` capability. All endpoints return JSON.
+
+### GET `/stats/summary`
+
+Month-to-date aggregate. The default admin dashboard calls this on page load.
+
+```json
+{
+  "platform": "woocommerce",
+  "period_start": "2026-04-01 00:00:00",
+  "period_end": "2026-04-30 23:59:59",
+  "total_attempts": 47,
+  "saved": 15,
+  "save_rate": 31.9,
+  "mrr_preserved_cents": 37400
+}
+```
+
+The `platform` field is always `"woocommerce"` in Phase 1. Future phases reserve `"stripe"`, `"paddle"`, `"recurly"`, `"chargebee"`, `"lemonsqueezy"`, `"custom"`.
+
+### GET `/flows`
+
+List of flows configured on this site. Includes the active default flow plus any variants used for A/B testing.
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Default save flow",
+    "trigger_event": "wc_subs_cancel_clicked",
+    "is_active": 1,
+    "created_at": "2026-04-15 10:12:33"
+  }
+]
+```
+
+### GET `/events`
+
+List of cancellation events, newest first. Paginated via `limit` query param (default 25, max 100).
+
+```json
+[
+  {
+    "id": 412,
+    "user_id": 88,
+    "subscription_id": 2041,
+    "platform": "woocommerce",
+    "external_subscription_id": "2041",
+    "flow_id": 1,
+    "cancel_reason": "too_expensive",
+    "offer_shown": "discount",
+    "offer_accepted": 1,
+    "final_status": "saved",
+    "monthly_value_cents": 4900,
+    "created_at": "2026-04-17 09:22:11",
+    "resolved_at": "2026-04-17 09:22:47"
+  }
+]
+```
+
+Use this for custom dashboards or for exporting to an external analytics pipeline.
+
+### GET `/settings` and POST `/settings`
+
+Read and write ChurnStop's settings object. POST payloads go through the `ClickToCancel` compliance validator before save; non-compliant configurations return HTTP 422 with a `violations` array.
+
+```json
+{
+  "settings": {
+    "default_discount_percent": 20,
+    "default_discount_cycles": 3,
+    "default_pause_days": 30
+  },
+  "defaults": { ... }
+}
+```
+
+## WordPress action hooks
+
+Actions fire when specific events happen. Use these to write to your own analytics or trigger downstream automation.
+
+### `churnstop_cancellation_started`
+
+Fires when a customer clicks Cancel and the save flow starts.
+
+```php
+do_action(
+    'churnstop_cancellation_started',
+    int $event_id,
+    int $subscription_id,
+    array $context  // [ 'user_id', 'monthly_value_cents' ]
+);
+```
+
+### `churnstop_survey_submitted`
+
+Fires when the customer answers the cancellation reason question.
+
+```php
+do_action(
+    'churnstop_survey_submitted',
+    int $event_id,
+    string $reason,           // e.g. 'too_expensive'
+    string $free_text_answer  // optional comment the customer typed
+);
+```
+
+### `churnstop_offer_accepted`
+
+Fires when the customer clicks to accept a save offer.
+
+```php
+do_action(
+    'churnstop_offer_accepted',
+    int $event_id,
+    array $offer  // [ 'type', 'value_percent' | 'duration_days' | ..., 'duration_billing_cycles' ]
+);
+```
+
+### `churnstop_cancellation_resolved`
+
+Terminal hook. Fires when a cancellation is either saved (offer accepted) or completed (customer cancelled). This is the hook to bind for pushing events into external analytics; it gives you the full lifecycle record.
+
+```php
+do_action(
+    'churnstop_cancellation_resolved',
+    int $event_id,
+    array $event  // full event row: reason, offer_shown, offer_accepted, final_status, monthly_value_cents, created_at, resolved_at
+);
+```
+
+Example - push every resolved event to Segment:
+
+```php
+add_action( 'churnstop_cancellation_resolved', function( $event_id, $event ) {
+    Segment::track([
+        'userId'     => (string) $event['user_id'],
+        'event'      => $event['final_status'] === 'saved' ? 'Subscription Saved' : 'Subscription Cancelled',
+        'properties' => [
+            'subscription_id'       => $event['external_subscription_id'],
+            'reason'                => $event['cancel_reason'],
+            'offer_shown'           => $event['offer_shown'],
+            'offer_accepted'        => (bool) $event['offer_accepted'],
+            'monthly_value_cents'   => $event['monthly_value_cents'],
+            'platform'              => $event['platform'],
+        ],
+    ]);
+}, 10, 2 );
+```
+
+## WordPress filter hooks
+
+Filters let you modify behaviour rather than just observing it.
+
+### `churnstop_default_flow`
+
+Override the default flow configuration at activation or on settings save. See the <Link href="/docs/offer-types">Offer types reference</Link> for the full example.
+
+### `churnstop_offer_for_reason`
+
+Swap the offer that gets shown for a specific reason, per subscriber or per request. Useful for running custom routing logic outside ChurnStop's own A/B engine.
+
+```php
+add_filter( 'churnstop_offer_for_reason', function( $offer, $reason, $context ) {
+    // Offer a 40% discount instead of 20% for VIP customers
+    if ( $reason === 'too_expensive' && is_user_vip( $context['user_id'] ) ) {
+        $offer['value_percent'] = 40;
+    }
+    return $offer;
+}, 10, 3 );
+```
+
+### `churnstop_compliance_validators`
+
+Add custom compliance checks on top of the built-in ones. Your check receives the proposed flow configuration and returns an array of violations (empty array = pass).
+
+```php
+add_filter( 'churnstop_compliance_validators', function( $validators ) {
+    $validators['require_cancel_confirmation_receipt'] = function( $config ) {
+        // Ensure the store's custom legal requirement is met
+        if ( empty( $config['send_confirmation_email'] ) ) {
+            return [ 'Compliance: a cancellation confirmation email must be sent.' ];
+        }
+        return [];
+    };
+    return $validators;
+} );
+```
+
+The built-in validators cannot be removed via this filter; they can only be supplemented.
+
+## Event payload schema
+
+All events stored in `wp_churnstop_cancellation_events` have this shape. Fields new in a minor version are additive only.
+
+```ts
+interface CancellationEvent {
+  id: number;
+  user_id: number;
+  subscription_id: number;              // WC-scoped integer (Phase 1 only)
+  platform: 'woocommerce';              // Phase 2 reserves stripe | paddle | recurly | ...
+  external_subscription_id: string;     // always string at the boundary; WC ID cast to string
+  flow_id: number;
+  cancel_reason: string | null;         // e.g. "too_expensive"; null until survey submitted
+  survey_response_json: string | null;  // raw JSON of survey answers
+  offer_shown: string | null;           // one of: discount | pause | skip_renewal | tier_down | extend_trial | product_swap
+  offer_accepted: 0 | 1;
+  final_status: 'pending' | 'in_progress' | 'saved' | 'cancelled';
+  monthly_value_cents: number;          // integer cents
+  created_at: string;                   // MySQL datetime
+  resolved_at: string | null;           // MySQL datetime; null until final
+}
+```
+
+## Versioning
+
+- Plugin major version (1.x -> 2.x) reserves the right to break this API.
+- Plugin minor version (1.0 -> 1.1) is additive only: new endpoints, new hooks, new payload fields.
+- Plugin patch version (1.0.0 -> 1.0.1) is bug fixes only.
+
+Breaking changes to the payload shape always trigger a major version bump. We do not retroactively add required fields; new fields are always optional with a documented default.
+
+## What's next
+
+- <Link href="/docs/offer-types">Offer types reference</Link> for the shape of each offer payload.
+- <Link href="/docs/getting-started">Getting started</Link> if you have not installed yet.
+- The source: [github.com/talbotarden/churnstop](https://github.com/talbotarden/churnstop) for canonical behaviour when this doc drifts.

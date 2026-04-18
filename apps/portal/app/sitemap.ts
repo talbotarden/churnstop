@@ -1,11 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/lib/site';
+import { docs } from '@/lib/docs';
 
-// Static sitemap. Keep entries in sync with the routes that are actually
-// rendered. MDX docs and blog posts will be enumerated dynamically once
-// those directories land; for now, only the built pages are listed.
+// Static sitemap. Top-level routes plus every doc that is currently shipped
+// (coming-soon docs are filtered out so the sitemap only lists URLs that
+// actually resolve). Doc entries are enumerated from lib/docs.ts so adding
+// a new MDX doc appends a sitemap entry automatically.
 
-const routes: Array<{ path: string; priority: number; changefreq: 'daily' | 'weekly' | 'monthly' }> = [
+const staticRoutes: Array<{ path: string; priority: number; changefreq: 'daily' | 'weekly' | 'monthly' }> = [
   { path: '/', priority: 1.0, changefreq: 'weekly' },
   { path: '/pricing', priority: 0.9, changefreq: 'monthly' },
   { path: '/features', priority: 0.8, changefreq: 'monthly' },
@@ -15,6 +17,13 @@ const routes: Array<{ path: string; priority: number; changefreq: 'daily' | 'wee
   { path: '/about', priority: 0.5, changefreq: 'monthly' },
   { path: '/terms', priority: 0.3, changefreq: 'monthly' },
   { path: '/privacy', priority: 0.3, changefreq: 'monthly' },
+];
+
+const routes = [
+  ...staticRoutes,
+  ...docs
+    .filter((d) => d.status !== 'coming-soon')
+    .map((d) => ({ path: `/docs/${d.slug}`, priority: 0.6, changefreq: 'monthly' as const })),
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

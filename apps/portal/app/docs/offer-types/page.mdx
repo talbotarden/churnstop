@@ -1,0 +1,232 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getDoc } from '@/lib/docs';
+import { site } from '@/lib/site';
+
+export const metadata = {
+  title: 'Offer types reference',
+  description:
+    'The six ChurnStop offer types (discount, pause, skip renewal, tier-down, extend trial, product swap). What each does, when to use it, and how it maps to native WooCommerce Subscriptions APIs.',
+  alternates: { canonical: '/docs/offer-types' },
+};
+
+{(() => {
+  const doc = getDoc('offer-types');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Docs', path: '/docs' },
+    { name: doc.title, path: `/docs/${doc.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: 'Offer types reference',
+    description: doc.description,
+    slug: `docs/${doc.slug}`,
+    publishedAt: '2026-04-18',
+    updatedAt: '2026-04-18',
+    authorName: 'ChurnStop',
+    keywords: ['WooCommerce save offer', 'subscription discount', 'subscription pause', 'tier-down', 'product swap'],
+  });
+  article['@id'] = `${site.url}/docs/${doc.slug}/#article`;
+  article.url = `${site.url}/docs/${doc.slug}`;
+  article.mainEntityOfPage = { '@type': 'WebPage', '@id': `${site.url}/docs/${doc.slug}` };
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/docs" className="hover:text-[var(--fg)]">Docs</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>Offer types reference</span>
+</nav>
+
+<div className="eyebrow">Reference · 12 min read</div>
+
+# Offer types reference
+
+ChurnStop ships six offer types. Each one maps to a specific native WooCommerce Subscriptions operation - nothing is hacked together or re-implemented. The free tier includes discount and pause; Starter and above unlock all six.
+
+| Offer type | Free | Starter+ | Maps to |
+|---|---|---|---|
+| `discount` | yes | yes | `WC_Coupon` with usage_limit |
+| `pause` | yes | yes | `update_status('on-hold')` + `update_dates(next_payment)` |
+| `skip_renewal` | - | yes | `update_dates(next_payment)` advanced one interval |
+| `tier_down` | - | yes | `WC_Subscriptions_Switcher` API |
+| `extend_trial` | - | yes | `update_dates(trial_end)` |
+| `product_swap` | - | yes | `WC_Subscriptions_Switcher` API |
+
+## When to use each offer
+
+Route offers by the customer's cancellation reason. ChurnStop ships a default mapping; you should edit it to match your product.
+
+| Cancel reason | Recommended offer | Why |
+|---|---|---|
+| Too expensive | `discount` | Price-sensitive. A percent-off offer directly addresses the objection. |
+| Too busy / not using | `pause` | Time-sensitive, not price-sensitive. A pause lets the customer come back without resubscribing. |
+| Switching to a competitor | `tier_down` or `discount` | Usually a price comparison. Tier-down works if you have a cheaper plan; discount if not. |
+| Technical issue | route to support, no offer | FTC compliance: do not offer a save instead of fixing the problem. |
+| No longer need it | `product_swap` or `extend_trial` | Sometimes the wrong product; swap to a different one. Sometimes just unsure; extend trial for re-evaluation. |
+| Other / not stated | `discount` | Most universally applicable when the reason is vague. |
+
+## Offer type details
+
+### 1. `discount`
+
+**What it does.** Issues a single-use WooCommerce coupon restricted to the subscriber's email address, applied automatically to the next N renewal invoices. The coupon uses `WC_Coupon` under the hood with `usage_limit` set to the number of cycles and `individual_use` on.
+
+**Configuration.**
+
+```json
+{
+  "type": "discount",
+  "value_percent": 20,
+  "duration_billing_cycles": 3
+}
+```
+
+- `value_percent` - integer 5 to 75. Larger values lower LTV; 15-25% is the safe band.
+- `duration_billing_cycles` - integer 1 to 12. Longer windows save more customers but cost more. Three cycles is the default.
+
+**Where it applies.** Any product. No product-specific configuration required.
+
+**Rollback.** Coupon is revoked via `WC_Coupon::set_status('trash')` when the customer cancels anyway or the cycles run out.
+
+### 2. `pause`
+
+**What it does.** Moves the subscription to `on-hold` status and pushes `next_payment` forward by N days. Billing halts; access to the product remains governed by whatever logic your store applies to on-hold subscriptions (typically "retain for the remainder of the paid period, then stop"). When the next payment date arrives, the subscription automatically renews and resumes.
+
+**Configuration.**
+
+```json
+{
+  "type": "pause",
+  "duration_days": 30
+}
+```
+
+- `duration_days` - integer 7 to 365. Common choices: 15, 30, 60, 90.
+
+**Where it applies.** Any subscription. If your store disables product access for on-hold subscribers, the customer loses access during the pause; if it does not, they keep access. ChurnStop does not modify your access logic.
+
+**Rollback.** A manual admin **Resume** button in ChurnStop > Events reverts the status to `active` and restores the prior `next_payment` date.
+
+### 3. `skip_renewal`
+
+**What it does.** Advances `next_payment` by exactly one billing interval (one month for monthly subscriptions, one year for annual, etc.), effectively giving the customer one free cycle. Status stays `active`. No coupon is issued.
+
+**Configuration.**
+
+```json
+{
+  "type": "skip_renewal"
+}
+```
+
+No parameters. The interval is read from the subscription.
+
+**Where it applies.** Works best for annual subscriptions where "one free renewal skip" is a larger concession than a percent-off. For monthly plans, prefer `discount` or `pause`.
+
+**Rollback.** Not typically needed; the customer simply sees one cycle's gap in invoices.
+
+### 4. `tier_down`
+
+**What it does.** Uses the `WC_Subscriptions_Switcher` API to move the customer to a cheaper product in the same subscription group. Requires the store to have defined a switch-compatible product variant or separate SKU for the lower tier.
+
+**Configuration.**
+
+```json
+{
+  "type": "tier_down",
+  "target_product_id": 1234
+}
+```
+
+- `target_product_id` - WooCommerce product ID of the lower-tier plan. ChurnStop validates that the target is switch-compatible before saving.
+
+**Where it applies.** Only on stores that have a multi-tier product structure (for instance, Monthly Pro at $49 and Monthly Basic at $19). If there is no lower tier to switch to, this offer type is disabled in the admin UI.
+
+**Rollback.** The customer can upgrade back via the normal WC Subscriptions switch mechanism.
+
+### 5. `extend_trial`
+
+**What it does.** Adds N days to the `trial_end` date. Only applies if the subscription is still in its trial period. If the trial has ended, the offer is hidden from the flow.
+
+**Configuration.**
+
+```json
+{
+  "type": "extend_trial",
+  "duration_days": 14
+}
+```
+
+- `duration_days` - integer 1 to 60. Typical choices: 7, 14, 30.
+
+**Where it applies.** Only during an active trial. ChurnStop does not extend trials for subscriptions that are already paying.
+
+**Rollback.** The trial extension can be manually reverted in the WC Subs admin by editing the `trial_end` date.
+
+### 6. `product_swap`
+
+**What it does.** Same `WC_Subscriptions_Switcher` API as `tier_down`, but swaps to a same-price or different-category product rather than a cheaper one. Useful when the customer's feedback is "I wanted product X, not product Y."
+
+**Configuration.**
+
+```json
+{
+  "type": "product_swap",
+  "target_product_id": 1234,
+  "allow_customer_choice": false
+}
+```
+
+- `target_product_id` - specific product ID to swap into.
+- `allow_customer_choice` - if `true`, show a picker listing eligible swap targets; the customer chooses. If `false`, swap to the specified `target_product_id` automatically on acceptance.
+
+**Where it applies.** Subscription boxes, memberships with tiered content, any store with multiple product lines. Not useful for single-product stores.
+
+**Rollback.** Customer can swap back at any time via the normal WC switch UI.
+
+## Setting offers from the admin
+
+From **ChurnStop > Flows**, click **Edit** on the active flow. The "Offers per reason" section lets you bind one of the six types to each cancellation reason. For each binding, you configure the parameters (discount percent, pause days, etc.) inline.
+
+Changes go through the ClickToCancel validator before saving. If a configuration would violate the compliance rules, the save is rejected and the admin shows which check failed.
+
+## Setting offers from code
+
+If you manage your site with code (as you should), flows can be seeded from a theme or custom plugin using the `churnstop_default_flow` filter:
+
+```php
+add_filter( 'churnstop_default_flow', function( $flow ) {
+    $flow['offers_by_reason'] = [
+        'too_expensive' => [
+            'type' => 'discount',
+            'value_percent' => 25,
+            'duration_billing_cycles' => 3,
+        ],
+        'too_busy' => [
+            'type' => 'pause',
+            'duration_days' => 60,
+        ],
+        'switching' => [
+            'type' => 'tier_down',
+            'target_product_id' => 1234,
+        ],
+    ];
+    return $flow;
+} );
+```
+
+This filter runs at activation and on each settings save. Flow values still pass through the compliance validator; the filter cannot bypass it.
+
+## What's next
+
+- <Link href="/docs/api">API and hooks reference</Link> for the event hooks fired when an offer is shown, accepted, or declined.
+- <Link href="/docs/ab-testing">A/B testing guide</Link> (coming soon) for how to experiment across offer types.
+- <Link href="/click-to-cancel">Click-to-cancel compliance</Link> for the rules every offer is validated against.

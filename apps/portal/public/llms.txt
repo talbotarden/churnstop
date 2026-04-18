@@ -18,12 +18,10 @@ Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add cond
 
 ## Docs
 
-- [Documentation index](https://churnstop.org/docs): Getting started, setup, offer types, A/B testing, API reference
-- [Getting started](https://churnstop.org/docs/getting-started): Install, activate, configure the default save flow in 5-10 minutes
-- [Setup guide](https://churnstop.org/docs/setup): Requirements (WP 6.0+, WC 8.0+, WC Subs 4.0+, PHP 7.4+) and step-by-step activation
-- [Offer types reference](https://churnstop.org/docs/offer-types): Discount, pause, skip-renewal, tier-down, extend-trial, product-swap - what each does and when to use it
-- [A/B testing guide](https://churnstop.org/docs/ab-testing): How to run offer and flow experiments, what sample sizes to aim for, how to read results
-- [API reference](https://churnstop.org/docs/api): Internal plugin-to-backend HTTP surface for license and entitlements
+- [Documentation index](https://churnstop.org/docs): Index of all ChurnStop docs grouped by Start, Reference, and Guides
+- [Getting started](https://churnstop.org/docs/getting-started): Install, activate, and verify the default save flow in 5-10 minutes. Covers prerequisites (WP 6.0+, WC 8.0+, WC Subs 4.0+, PHP 7.4+).
+- [Offer types reference](https://churnstop.org/docs/offer-types): The six offer types (discount, pause, skip-renewal, tier-down, extend-trial, product-swap) - what each does, when to use it, and how it maps to native WC Subs APIs
+- [API and hooks reference](https://churnstop.org/docs/api): REST endpoints under /wp-json/churnstop/v1/, WordPress action hooks (churnstop_cancellation_resolved and others), filter hooks, and the full cancellation-event payload schema
 
 ## Blog
 

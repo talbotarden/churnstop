@@ -1,0 +1,129 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildHowToSchema } from '@/lib/schema/howto';
+import { getDoc } from '@/lib/docs';
+
+export const metadata = {
+  title: 'Getting started',
+  description:
+    'Install the ChurnStop plugin, activate it, and verify the default save flow intercepts a test cancellation in 5-10 minutes.',
+  alternates: { canonical: '/docs/getting-started' },
+};
+
+{(() => {
+  const doc = getDoc('getting-started');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Docs', path: '/docs' },
+    { name: doc.title, path: `/docs/${doc.slug}` },
+  ]);
+  const howto = buildHowToSchema({
+    title: 'Install ChurnStop on a WooCommerce Subscriptions store',
+    description: doc.description,
+    slug: `docs/${doc.slug}`,
+    totalTime: 'PT10M',
+    tools: ['WordPress admin', 'WooCommerce Subscriptions 4.0+'],
+    steps: [
+      { name: 'Confirm prerequisites', text: 'Verify that WordPress, WooCommerce, and WooCommerce Subscriptions versions meet the minimum requirements.' },
+      { name: 'Download the plugin', text: 'Get the ChurnStop .zip from wordpress.org or churnstop.org/downloads/churnstop.zip.' },
+      { name: 'Upload and activate', text: 'From Plugins > Add New > Upload Plugin, pick the zip, install, and activate.' },
+      { name: 'Open the ChurnStop admin', text: 'Visit the ChurnStop top-level admin menu item; the dashboard shows zeros until you run a test cancellation.' },
+      { name: 'Optionally enter a license key', text: 'Paste the license from your ChurnStop customer portal if you are on a paid tier. Free tier requires no key.' },
+      { name: 'Test the cancel flow', text: 'Create a test subscription, go to the My Account page, click cancel, and verify the save modal appears with the default offer.' },
+      { name: 'Confirm compliance', text: 'Click the "No thanks, cancel my subscription" link on the save modal and confirm cancellation completes in a single click.' },
+    ],
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-howto" schema={howto} />
+  </>;
+})()}
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/docs" className="hover:text-[var(--fg)]">Docs</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>Getting started</span>
+</nav>
+
+<div className="eyebrow">Start · 8 min read</div>
+
+# Getting started with ChurnStop
+
+This guide takes a WooCommerce Subscriptions store from no save flow to a working ChurnStop install in about 5-10 minutes. After you finish, a test cancellation on the My Account page will show the default save modal, and the admin dashboard will record the attempt.
+
+## Prerequisites
+
+Before installing, confirm these version floors. ChurnStop refuses to activate on older versions because the required WooCommerce Subscriptions APIs are not present.
+
+- WordPress 6.0 or newer
+- WooCommerce 8.0 or newer
+- WooCommerce Subscriptions 4.0 or newer
+- PHP 7.4 or newer
+
+If any of those are older, update first. The plugin will not run on PHP 7.3 or earlier and will not run against WooCommerce Subscriptions 3.x.
+
+## Step 1 - Download the plugin
+
+Two paths:
+
+1. **wordpress.org (once listed)**: search "ChurnStop" in Plugins > Add New, click Install, then Activate. This is the recommended path once the listing is approved.
+2. **Direct download**: grab [churnstop.zip from churnstop.org/downloads](https://churnstop.org/downloads/churnstop.zip) and upload manually. Use this while the wp.org listing is in review.
+
+The zip is around 70 KB and contains the PHP plugin plus the compiled React admin and modal bundles. There is nothing to build locally; the plugin is ready to activate.
+
+## Step 2 - Upload and activate
+
+In your WordPress admin:
+
+1. Go to **Plugins > Add New > Upload Plugin**.
+2. Pick the `churnstop.zip` file.
+3. Click **Install Now**, then **Activate Plugin**.
+
+You will see a top-level **ChurnStop** menu item appear in the sidebar. If you do not, WooCommerce Subscriptions is probably not active - ChurnStop hides its admin menu when the dependency is missing.
+
+## Step 3 - Open the admin
+
+Click the **ChurnStop** menu item. The dashboard shows three zeros (MRR preserved, save rate, cancel attempts) and a "Default save flow" row in the flow list. That default flow is active automatically; you do not need to configure anything to intercept your first cancellation.
+
+## Step 4 - License (paid tier only)
+
+If you are on Starter, Growth, or Agency, paste your license key into **ChurnStop > Settings > License**. You get the key from the <Link href="/account">customer portal</Link> after checkout. The free tier needs no key and never contacts ChurnStop servers.
+
+If you skip this step on a paid tier, ChurnStop falls back to the free-tier feature set until a valid license is entered. It will not lock you out.
+
+## Step 5 - Run a test cancellation
+
+From a fresh incognito browser window:
+
+1. Log in as a test customer who owns an active subscription (create one first if you don't have a test subscription).
+2. Go to **My Account > Subscriptions**.
+3. Click **Cancel** on a subscription.
+
+The ChurnStop save modal should appear. The default flow asks one question - why are you cancelling - and shows an offer based on the answer. Select a reason, view the offer, then click the **No thanks, cancel my subscription** link at the bottom of the modal.
+
+The subscription should cancel immediately with the usual WooCommerce Subscriptions cancellation notice. Back in the admin, the ChurnStop dashboard should now show **1 attempt** and **0 saved**.
+
+## Step 6 - Confirm compliance
+
+FTC click-to-cancel compliance is non-negotiable. Before you ship to real customers, verify the decline-and-cancel link is one click from completing cancellation on every screen of the flow. The default flow is compliant out of the box; changes to the flow pass through the ClickToCancel validator, which will reject anything non-compliant at save time.
+
+Read <Link href="/click-to-cancel">the click-to-cancel compliance page</Link> for the full rule-by-rule breakdown.
+
+## What to configure next
+
+The default flow is a sensible starting point but not the most effective flow for any specific store. Once you have ChurnStop running, the highest-leverage changes in order:
+
+1. **Customize the cancellation reasons** to match your store's actual churn patterns. Generic "too expensive" and "too busy" work fine; reasons specific to your product (for instance "can't find the product I want" for a subscription box) work better.
+2. **Tune the default offer values** per reason. A 20% discount for 3 cycles is a safe default; your mileage will vary.
+3. **Enable A/B testing (Starter+)** once you have at least 50 cancellation attempts per month. Test offer amount or reason wording first; those move the needle the most.
+
+## Where to go from here
+
+- <Link href="/docs/offer-types">Offer types reference</Link> - what each of the six offer types does and how it maps to native WC Subs APIs.
+- <Link href="/docs/api">API and hooks reference</Link> - WordPress actions, REST endpoints, and payload shapes for piping events into your own analytics.
+- <Link href="/pricing">Pricing</Link> - when to upgrade from free.
+
+If anything breaks during install, open an issue at [github.com/talbotarden/churnstop](https://github.com/talbotarden/churnstop) or email support@churnstop.org.
