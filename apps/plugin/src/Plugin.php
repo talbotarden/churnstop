@@ -6,6 +6,7 @@ namespace ChurnStop;
 use ChurnStop\Admin\Admin;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Container;
+use ChurnStop\Experiments\AbTestManager;
 use ChurnStop\Flow\FlowEngine;
 use ChurnStop\License\LicenseManager;
 use ChurnStop\Privacy\DataSubjectHandlers;
@@ -42,13 +43,14 @@ final class Plugin {
 
 		// Core subsystems.
 		$license    = new LicenseManager();
-		$flowEngine = new FlowEngine( $license );
+		$abTest     = new AbTestManager( $license );
+		$flowEngine = new FlowEngine( $license, $abTest );
 		$compliance = new ClickToCancel();
 
 		// Register listeners.
 		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
 		( new Admin( $license, $flowEngine ) )->register();
-		( new RestRoutes( $flowEngine, $license ) )->register();
+		( new RestRoutes( $flowEngine, $license, $abTest ) )->register();
 		( new DataSubjectHandlers() )->register();
 
 		// Load translations.

@@ -46,6 +46,7 @@ final class LicenseManager {
 				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode(
 					array(
+						'platform' => 'woocommerce',
 						'key'      => $key,
 						'site_url' => home_url(),
 					)
@@ -103,6 +104,7 @@ final class LicenseManager {
 				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode(
 					array(
+						'platform' => 'woocommerce',
 						'key'      => $key,
 						'site_url' => home_url(),
 					)

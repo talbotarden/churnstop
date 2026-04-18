@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ChurnStop\Flow;
 
 use ChurnStop\Core\Settings;
+use ChurnStop\Experiments\AbTestManager;
 use ChurnStop\License\LicenseManager;
 
 /**
@@ -18,8 +19,11 @@ final class FlowEngine {
 
 	private LicenseManager $license;
 
-	public function __construct( LicenseManager $license ) {
+	private AbTestManager $abTest;
+
+	public function __construct( LicenseManager $license, ?AbTestManager $abTest = null ) {
 		$this->license = $license;
+		$this->abTest  = $abTest ?? new AbTestManager( $license );
 	}
 
 	/**
@@ -58,6 +62,19 @@ final class FlowEngine {
 		);
 
 		$eventId = (int) $wpdb->insert_id;
+
+		// Assign an A/B variant (if any test is running on this flow). The
+		// variant's config slice overrides the offer routing at offer time;
+		// the assignment row is stamped with the cancellation_event_id so
+		// resolution can write the outcome back for significance analysis.
+		$activeTest = $this->abTest->activeTestForFlow( (int) $flow['id'] );
+		if ( $activeTest !== null ) {
+			$userId     = get_current_user_id();
+			$assignment = $this->abTest->assignVariant( $activeTest, $userId, $subscriptionId );
+			if ( $assignment !== null ) {
+				$this->abTest->recordAssignment( (int) $activeTest['id'], $assignment['variant'], $userId, $eventId );
+			}
+		}
 
 		/**
 		 * Fires when a subscriber clicks cancel and the save flow starts.
@@ -157,6 +174,7 @@ final class FlowEngine {
 		}
 
 		$config = json_decode( $offerStep['config_json'], true );
+		$config = $this->applyAbVariantOverrides( $eventId, (array) $config );
 		$offer  = $config['conditional'][ $reason ] ?? $config['default_offer'] ?? null;
 
 		/**
@@ -200,6 +218,7 @@ final class FlowEngine {
 		$event     = $this->getEvent( $eventId );
 		$offerStep = $this->getOfferStep( (int) $event['flow_id'] );
 		$config    = json_decode( $offerStep['config_json'], true );
+		$config    = $this->applyAbVariantOverrides( $eventId, (array) $config );
 		$offer     = $config['conditional'][ $event['cancel_reason'] ] ?? $config['default_offer'];
 
 		$subscription = wcs_get_subscription( (int) $event['subscription_id'] );
@@ -255,6 +274,8 @@ final class FlowEngine {
 			array( 'id' => $eventId )
 		);
 
+		$this->abTest->recordOutcome( $eventId, 'saved' );
+
 		/**
 		 * Fires when a save offer is accepted and successfully applied.
 		 *
@@ -302,6 +323,8 @@ final class FlowEngine {
 			),
 			array( 'id' => $eventId )
 		);
+
+		$this->abTest->recordOutcome( $eventId, 'cancelled' );
 
 		/**
 		 * Fires on cancellation resolution. Same hook as acceptOffer; both
@@ -502,6 +525,63 @@ final class FlowEngine {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Merge the active A/B variant's offer overrides into the base offer
+	 * config. Variant configs can override either `conditional` (per-reason
+	 * offer map) or `default_offer` (fallback offer). Missing keys on the
+	 * variant pass through unchanged from the base config so a variant can
+	 * scope itself to a single reason without rewriting the whole routing
+	 * table.
+	 *
+	 * @param array<string, mixed> $config
+	 * @return array<string, mixed>
+	 */
+	private function applyAbVariantOverrides( int $eventId, array $config ): array {
+		global $wpdb;
+		$table = $wpdb->prefix . AbTestManager::TABLE_ASSIGNMENTS;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT a.test_id, a.variant, t.variants_json
+				 FROM {$table} a
+				 INNER JOIN {$wpdb->prefix}churnstop_ab_tests t ON t.id = a.test_id
+				 WHERE a.cancellation_event_id = %d
+				 ORDER BY a.id DESC LIMIT 1",
+				$eventId
+			),
+			ARRAY_A
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( ! $row ) {
+			return $config;
+		}
+
+		$variants = json_decode( (string) $row['variants_json'], true );
+		if ( ! is_array( $variants ) ) {
+			return $config;
+		}
+
+		foreach ( $variants as $variant ) {
+			if ( ( $variant['name'] ?? '' ) === $row['variant'] ) {
+				$override = (array) ( $variant['config'] ?? array() );
+				if ( isset( $override['conditional'] ) && is_array( $override['conditional'] ) ) {
+					$config['conditional'] = array_merge(
+						(array) ( $config['conditional'] ?? array() ),
+						$override['conditional']
+					);
+				}
+				if ( array_key_exists( 'default_offer', $override ) ) {
+					$config['default_offer'] = $override['default_offer'];
+				}
+				break;
+			}
+		}
+
+		return $config;
 	}
 
 	/**

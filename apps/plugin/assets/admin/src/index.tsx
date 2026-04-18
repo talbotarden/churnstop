@@ -8,6 +8,7 @@ import { SettingsScreen } from './screens/Settings';
 import { Placeholder } from './screens/Placeholder';
 import { Logs } from './screens/Logs';
 import { License } from './screens/License';
+import { AbTests } from './screens/AbTests';
 
 declare const ChurnStopAdmin: {
   apiUrl: string;
@@ -29,7 +30,7 @@ function App() {
     case 'churnstop-analytics':
       return h(Placeholder, { title: 'Analytics', body: 'Save rate by reason, cohort LTV comparisons, and winback attribution. Paid tier feature.' });
     case 'churnstop-ab':
-      return h(Placeholder, { title: 'A/B Tests', body: 'Test offer amounts, copy, and flow variants with statistical significance tracking. Paid tier feature.' });
+      return h(AbTests, null);
     case 'churnstop-winback':
       return h(Placeholder, { title: 'Winback', body: 'Email sequences for customers who declined all offers. Paid tier feature.' });
     case 'churnstop-logs':

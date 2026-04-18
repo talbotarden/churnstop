@@ -5,6 +5,7 @@ namespace ChurnStop\Rest;
 
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Settings;
+use ChurnStop\Experiments\AbTestManager;
 use ChurnStop\Flow\FlowEngine;
 use ChurnStop\License\LicenseManager;
 
@@ -18,9 +19,12 @@ final class RestRoutes {
 
 	private LicenseManager $license;
 
-	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null ) {
+	private AbTestManager $abTest;
+
+	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null, ?AbTestManager $abTest = null ) {
 		$this->flowEngine = $flowEngine;
 		$this->license    = $license ?? new LicenseManager();
+		$this->abTest     = $abTest ?? new AbTestManager( $this->license );
 	}
 
 	public function register(): void {
@@ -113,6 +117,176 @@ final class RestRoutes {
 				'permission_callback' => array( $this, 'licensePermissionCheck' ),
 			)
 		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/ab-tests',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'listAbTests' ),
+					'permission_callback' => array( $this, 'permissionCheck' ),
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'createAbTest' ),
+					'permission_callback' => array( $this, 'permissionCheck' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/ab-tests/(?P<id>\d+)/results',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'abTestResults' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
+				'args'                => array(
+					'id' => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/ab-tests/(?P<id>\d+)/stop',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'stopAbTest' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
+				'args'                => array(
+					'id' => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+	}
+
+	public function listAbTests(): \WP_REST_Response {
+		if ( ! $this->abTest->isEnabled() ) {
+			return new \WP_REST_Response(
+				array(
+					'error'    => 'ab_testing_not_licensed',
+					'message'  => __( 'A/B testing requires a Starter plan or higher.', 'churnstop' ),
+					'feature'  => AbTestManager::FEATURE,
+				),
+				402
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'tests' => $this->abTest->listTests(),
+			)
+		);
+	}
+
+	public function createAbTest( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! $this->abTest->isEnabled() ) {
+			return new \WP_REST_Response(
+				array(
+					'error'   => 'ab_testing_not_licensed',
+					'message' => __( 'A/B testing requires a Starter plan or higher.', 'churnstop' ),
+				),
+				402
+			);
+		}
+
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new \WP_REST_Response( array( 'error' => 'Invalid payload' ), 400 );
+		}
+
+		$name     = isset( $payload['name'] ) ? sanitize_text_field( (string) $payload['name'] ) : '';
+		$flowId   = isset( $payload['flow_id'] ) ? (int) $payload['flow_id'] : 0;
+		$variants = isset( $payload['variants'] ) && is_array( $payload['variants'] ) ? $payload['variants'] : array();
+
+		if ( $name === '' || $flowId <= 0 || count( $variants ) < 2 ) {
+			return new \WP_REST_Response(
+				array( 'error' => 'Name, flow_id, and at least 2 variants are required.' ),
+				422
+			);
+		}
+
+		$cleaned = array();
+		foreach ( $variants as $variant ) {
+			if ( ! is_array( $variant ) || empty( $variant['name'] ) ) {
+				continue;
+			}
+			$cleaned[] = array(
+				'name'   => sanitize_text_field( (string) $variant['name'] ),
+				'weight' => max( 1, (int) ( $variant['weight'] ?? 1 ) ),
+				'config' => is_array( $variant['config'] ?? null ) ? $variant['config'] : array(),
+			);
+		}
+
+		if ( count( $cleaned ) < 2 ) {
+			return new \WP_REST_Response(
+				array( 'error' => 'Each variant needs a name.' ),
+				422
+			);
+		}
+
+		$id = $this->abTest->createTest( $name, $flowId, $cleaned );
+
+		if ( $id === 0 ) {
+			return new \WP_REST_Response( array( 'error' => 'Could not create test.' ), 500 );
+		}
+
+		return rest_ensure_response(
+			array(
+				'ok' => true,
+				'id' => $id,
+			)
+		);
+	}
+
+	public function abTestResults( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! $this->abTest->isEnabled() ) {
+			return new \WP_REST_Response(
+				array( 'error' => 'ab_testing_not_licensed' ),
+				402
+			);
+		}
+
+		$id = (int) $request->get_param( 'id' );
+		$tests = $this->abTest->listTests();
+		$test = null;
+		foreach ( $tests as $row ) {
+			if ( (int) $row['id'] === $id ) {
+				$test = $row;
+				break;
+			}
+		}
+
+		if ( ! $test ) {
+			return new \WP_REST_Response( array( 'error' => 'Test not found.' ), 404 );
+		}
+
+		return rest_ensure_response(
+			array(
+				'test'    => $test,
+				'results' => $this->abTest->computeResults( $test ),
+			)
+		);
+	}
+
+	public function stopAbTest( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! $this->abTest->isEnabled() ) {
+			return new \WP_REST_Response( array( 'error' => 'ab_testing_not_licensed' ), 402 );
+		}
+
+		$this->abTest->stopTest( (int) $request->get_param( 'id' ) );
+
+		return rest_ensure_response( array( 'ok' => true ) );
 	}
 
 	public function getSettings(): \WP_REST_Response {
