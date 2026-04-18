@@ -16,6 +16,10 @@ const cols: Array<{ title: string; links: Array<{ href: string; label: string }>
     links: [
       { href: '/docs', label: 'Docs' },
       { href: '/blog', label: 'Blog' },
+      { href: '/glossary', label: 'Glossary' },
+      { href: '/calculators', label: 'Calculators' },
+      { href: '/for', label: 'By vertical' },
+      { href: '/vs', label: 'Compare' },
       { href: '/about', label: 'About' },
     ],
   },

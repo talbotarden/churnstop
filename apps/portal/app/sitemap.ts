@@ -2,6 +2,10 @@ import type { MetadataRoute } from 'next';
 import { site } from '@/lib/site';
 import { docs } from '@/lib/docs';
 import { publishedPosts } from '@/lib/blog';
+import { personaSlugs } from '@/lib/data/personas';
+import { glossarySlugs } from '@/lib/data/glossary';
+import { calculatorSlugs } from '@/lib/data/calculators';
+import { comparisonSlugs } from '@/lib/data/comparisons';
 
 // Static sitemap. Top-level routes plus every doc that is currently shipped
 // (coming-soon docs are filtered out so the sitemap only lists URLs that
@@ -13,6 +17,10 @@ const staticRoutes: Array<{ path: string; priority: number; changefreq: 'daily' 
   { path: '/pricing', priority: 0.9, changefreq: 'monthly' },
   { path: '/features', priority: 0.8, changefreq: 'monthly' },
   { path: '/click-to-cancel', priority: 0.8, changefreq: 'monthly' },
+  { path: '/for', priority: 0.7, changefreq: 'monthly' },
+  { path: '/glossary', priority: 0.7, changefreq: 'monthly' },
+  { path: '/calculators', priority: 0.7, changefreq: 'monthly' },
+  { path: '/vs', priority: 0.7, changefreq: 'monthly' },
   { path: '/docs', priority: 0.7, changefreq: 'weekly' },
   { path: '/blog', priority: 0.6, changefreq: 'weekly' },
   { path: '/about', priority: 0.5, changefreq: 'monthly' },
@@ -30,6 +38,10 @@ const routes = [
     priority: 0.6,
     changefreq: 'monthly' as const,
   })),
+  ...personaSlugs().map((s) => ({ path: `/for/${s}`, priority: 0.65, changefreq: 'monthly' as const })),
+  ...glossarySlugs().map((s) => ({ path: `/glossary/${s}`, priority: 0.55, changefreq: 'monthly' as const })),
+  ...calculatorSlugs().map((s) => ({ path: `/calculators/${s}`, priority: 0.65, changefreq: 'monthly' as const })),
+  ...comparisonSlugs().map((s) => ({ path: `/vs/${s}`, priority: 0.6, changefreq: 'monthly' as const })),
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

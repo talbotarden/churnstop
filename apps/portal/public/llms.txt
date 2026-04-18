@@ -23,6 +23,34 @@ Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add cond
 - [Offer types reference](https://churnstop.org/docs/offer-types): The six offer types (discount, pause, skip-renewal, tier-down, extend-trial, product-swap) - what each does, when to use it, and how it maps to native WC Subs APIs
 - [API and hooks reference](https://churnstop.org/docs/api): REST endpoints under /wp-json/churnstop/v1/, WordPress action hooks (churnstop_cancellation_resolved and others), filter hooks, and the full cancellation-event payload schema
 
+## By vertical
+
+- [Save flows by vertical index](https://churnstop.org/for): Reason-to-offer routing tables tuned for each subscription business model
+- [Subscription boxes](https://churnstop.org/for/subscription-boxes): Skip-renewal + product-swap routing for box stores (35-45% save rate)
+- [SaaS on WooCommerce](https://churnstop.org/for/saas): Tier-down beats discount for SaaS cancellations (20-30% save rate)
+- [Memberships](https://churnstop.org/for/memberships): Pause converts 2-3x better than discount on memberships (62% reactivate in 90 days)
+- [Online courses + cohorts](https://churnstop.org/for/online-courses): Extend-trial for stalled learners, tier-down to evergreen track
+- [Paid newsletters](https://churnstop.org/for/newsletters): Downgrade to free tier on "too expensive" preserves the reader relationship
+- [Replenishment commerce](https://churnstop.org/for/replenishment): Highest save rates (40-55%) driven by skip-renewal routing
+
+## Calculators
+
+- [Calculator index](https://churnstop.org/calculators): Four subscription math tools, no signup
+- [Churn rate calculator](https://churnstop.org/calculators/churn-rate): Monthly gross churn with the correct denominator
+- [Save-rate impact](https://churnstop.org/calculators/save-rate-impact): MRR preserved at realistic save rates
+- [LTV lift calculator](https://churnstop.org/calculators/ltv-lift): Churn reduction -> new lifetime value
+- [Winback revenue](https://churnstop.org/calculators/winback-revenue): Annual revenue from a 7/21/60 day email sequence
+
+## Glossary
+
+- [Subscription + churn glossary](https://churnstop.org/glossary): 12 core terms with formulas and worked examples
+- [Churn rate](https://churnstop.org/glossary/churn-rate), [save rate](https://churnstop.org/glossary/save-rate), [voluntary + involuntary churn](https://churnstop.org/glossary/voluntary-churn), [cancellation flow](https://churnstop.org/glossary/cancellation-flow), [click-to-cancel](https://churnstop.org/glossary/click-to-cancel), [ROSCA](https://churnstop.org/glossary/rosca), [NRR](https://churnstop.org/glossary/net-revenue-retention), [MRR](https://churnstop.org/glossary/mrr), [cohort retention](https://churnstop.org/glossary/cohort-retention), [winback](https://churnstop.org/glossary/winback), [FTC click-to-cancel rule](https://churnstop.org/glossary/ftc-click-to-cancel)
+
+## Compare
+
+- [Compare index](https://churnstop.org/vs): Honest comparisons against other save-flow tools, including when the competitor is the better pick
+- [ChurnStop vs Churnkey](https://churnstop.org/vs/churnkey), [vs ProsperStack](https://churnstop.org/vs/prosperstack), [vs Brightback / Chargebee Retain](https://churnstop.org/vs/brightback), [vs Retainly](https://churnstop.org/vs/retainly), [vs StayMate](https://churnstop.org/vs/staymate)
+
 ## Blog
 
 - [Blog index](https://churnstop.org/blog): Subscription retention, WooCommerce churn data, save-flow best practices, FTC click-to-cancel updates

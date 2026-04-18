@@ -9,6 +9,7 @@ export const site = {
     { href: '/features', label: 'Features' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/click-to-cancel', label: 'Click to Cancel' },
+    { href: '/for', label: 'By vertical' },
     { href: '/docs', label: 'Docs' },
     { href: '/blog', label: 'Blog' },
   ],
