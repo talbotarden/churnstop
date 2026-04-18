@@ -14,159 +14,154 @@ use ChurnStop\Flow\FlowEngine;
  * We do NOT block native cancellation. If the user chooses "No thanks, cancel,"
  * the native WC Subs flow proceeds unmodified.
  */
-final class CancellationInterceptor
-{
-    private FlowEngine $flowEngine;
+final class CancellationInterceptor {
 
-    private ClickToCancel $compliance;
+	private FlowEngine $flowEngine;
 
-    public function __construct(FlowEngine $flowEngine, ClickToCancel $compliance)
-    {
-        $this->flowEngine = $flowEngine;
-        $this->compliance = $compliance;
-    }
+	private ClickToCancel $compliance;
 
-    public function register(): void
-    {
-        // Enqueue the save-flow modal on My Account subscription pages.
-        add_action('wp_enqueue_scripts', [$this, 'enqueueModal']);
+	public function __construct( FlowEngine $flowEngine, ClickToCancel $compliance ) {
+		$this->flowEngine = $flowEngine;
+		$this->compliance = $compliance;
+	}
 
-        // Add data-attributes to the native WC Subs cancel link so our JS can find it.
-        add_filter('woocommerce_my_account_my_subscriptions_actions', [$this, 'markCancelAction'], 10, 2);
+	public function register(): void {
+		// Enqueue the save-flow modal on My Account subscription pages.
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueueModal' ) );
 
-        // AJAX endpoint to kick off a flow.
-        add_action('wp_ajax_churnstop_start_flow', [$this, 'ajaxStartFlow']);
+		// Add data-attributes to the native WC Subs cancel link so our JS can find it.
+		add_filter( 'woocommerce_my_account_my_subscriptions_actions', array( $this, 'markCancelAction' ), 10, 2 );
 
-        // AJAX endpoint to submit survey response.
-        add_action('wp_ajax_churnstop_submit_survey', [$this, 'ajaxSubmitSurvey']);
+		// AJAX endpoint to kick off a flow.
+		add_action( 'wp_ajax_churnstop_start_flow', array( $this, 'ajaxStartFlow' ) );
 
-        // AJAX endpoint to accept an offer.
-        add_action('wp_ajax_churnstop_accept_offer', [$this, 'ajaxAcceptOffer']);
+		// AJAX endpoint to submit survey response.
+		add_action( 'wp_ajax_churnstop_submit_survey', array( $this, 'ajaxSubmitSurvey' ) );
 
-        // AJAX endpoint to decline and complete cancellation.
-        add_action('wp_ajax_churnstop_decline_and_cancel', [$this, 'ajaxDeclineAndCancel']);
-    }
+		// AJAX endpoint to accept an offer.
+		add_action( 'wp_ajax_churnstop_accept_offer', array( $this, 'ajaxAcceptOffer' ) );
 
-    public function enqueueModal(): void
-    {
-        if (!is_account_page()) {
-            return;
-        }
+		// AJAX endpoint to decline and complete cancellation.
+		add_action( 'wp_ajax_churnstop_decline_and_cancel', array( $this, 'ajaxDeclineAndCancel' ) );
+	}
 
-        $asset = CHURNSTOP_DIR . 'assets/modal/build/modal.asset.php';
-        $deps = ['wp-element'];
-        $version = CHURNSTOP_VERSION;
+	public function enqueueModal(): void {
+		if ( ! is_account_page() ) {
+			return;
+		}
 
-        if (file_exists($asset)) {
-            $data = include $asset;
-            $deps = $data['dependencies'] ?? $deps;
-            $version = $data['version'] ?? $version;
-        }
+		$asset   = CHURNSTOP_DIR . 'assets/modal/build/modal.asset.php';
+		$deps    = array( 'wp-element' );
+		$version = CHURNSTOP_VERSION;
 
-        wp_enqueue_script(
-            'churnstop-modal',
-            CHURNSTOP_URL . 'assets/modal/build/modal.js',
-            $deps,
-            $version,
-            true
-        );
+		if ( file_exists( $asset ) ) {
+			$data    = include $asset;
+			$deps    = $data['dependencies'] ?? $deps;
+			$version = $data['version'] ?? $version;
+		}
 
-        // CSS is imported by the modal entry and emitted alongside the JS bundle.
-        if (file_exists(CHURNSTOP_DIR . 'assets/modal/build/modal.css')) {
-            wp_enqueue_style(
-                'churnstop-modal',
-                CHURNSTOP_URL . 'assets/modal/build/modal.css',
-                [],
-                $version
-            );
-        }
+		wp_enqueue_script(
+			'churnstop-modal',
+			CHURNSTOP_URL . 'assets/modal/build/modal.js',
+			$deps,
+			$version,
+			true
+		);
 
-        $settings = Settings::all();
+		// CSS is imported by the modal entry and emitted alongside the JS bundle.
+		if ( file_exists( CHURNSTOP_DIR . 'assets/modal/build/modal.css' ) ) {
+			wp_enqueue_style(
+				'churnstop-modal',
+				CHURNSTOP_URL . 'assets/modal/build/modal.css',
+				array(),
+				$version
+			);
+		}
 
-        wp_localize_script('churnstop-modal', 'ChurnStop', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('churnstop_flow'),
-            'i18n' => [
-                'noThanksCancel' => (string) ($settings['cancel_button_text'] ?? __('No thanks, cancel my subscription', 'churnstop')),
-                'modalHeading' => (string) ($settings['modal_heading'] ?? __('Before you go...', 'churnstop')),
-            ],
-            'branding' => [
-                'accentColor' => (string) ($settings['accent_color'] ?? '#0f1419'),
-            ],
-        ]);
-    }
+		$settings = Settings::all();
 
-    /**
-     * @param array<string, array<string, string>> $actions
-     *
-     * @return array<string, array<string, string>>
-     */
-    public function markCancelAction(array $actions, \WC_Subscription $subscription): array
-    {
-        if (isset($actions['cancel'])) {
-            $actions['cancel']['class'] = trim(($actions['cancel']['class'] ?? '') . ' churnstop-cancel-intercept');
-            $actions['cancel']['data-subscription-id'] = (string) $subscription->get_id();
-        }
+		wp_localize_script(
+			'churnstop-modal',
+			'ChurnStop',
+			array(
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'churnstop_flow' ),
+				'i18n'     => array(
+					'noThanksCancel' => (string) ( $settings['cancel_button_text'] ?? __( 'No thanks, cancel my subscription', 'churnstop' ) ),
+					'modalHeading'   => (string) ( $settings['modal_heading'] ?? __( 'Before you go...', 'churnstop' ) ),
+				),
+				'branding' => array(
+					'accentColor' => (string) ( $settings['accent_color'] ?? '#0f1419' ),
+				),
+			)
+		);
+	}
 
-        return $actions;
-    }
+	/**
+	 * @param array<string, array<string, string>> $actions
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public function markCancelAction( array $actions, \WC_Subscription $subscription ): array {
+		if ( isset( $actions['cancel'] ) ) {
+			$actions['cancel']['class']                = trim( ( $actions['cancel']['class'] ?? '' ) . ' churnstop-cancel-intercept' );
+			$actions['cancel']['data-subscription-id'] = (string) $subscription->get_id();
+		}
 
-    public function ajaxStartFlow(): void
-    {
-        check_ajax_referer('churnstop_flow', 'nonce');
+		return $actions;
+	}
 
-        $subscriptionId = isset($_POST['subscription_id']) ? (int) $_POST['subscription_id'] : 0;
+	public function ajaxStartFlow(): void {
+		check_ajax_referer( 'churnstop_flow', 'nonce' );
 
-        if ($subscriptionId <= 0) {
-            wp_send_json_error(['message' => 'Invalid subscription'], 400);
-        }
+		$subscriptionId = isset( $_POST['subscription_id'] ) ? (int) $_POST['subscription_id'] : 0;
 
-        if (!$this->currentUserOwnsSubscription($subscriptionId)) {
-            wp_send_json_error(['message' => 'Unauthorised'], 403);
-        }
+		if ( $subscriptionId <= 0 ) {
+			wp_send_json_error( array( 'message' => 'Invalid subscription' ), 400 );
+		}
 
-        $payload = $this->flowEngine->startForSubscription($subscriptionId);
+		if ( ! $this->currentUserOwnsSubscription( $subscriptionId ) ) {
+			wp_send_json_error( array( 'message' => 'Unauthorised' ), 403 );
+		}
 
-        wp_send_json_success($payload);
-    }
+		$payload = $this->flowEngine->startForSubscription( $subscriptionId );
 
-    public function ajaxSubmitSurvey(): void
-    {
-        check_ajax_referer('churnstop_flow', 'nonce');
-        $eventId = isset($_POST['event_id']) ? (int) $_POST['event_id'] : 0;
-        $reason = isset($_POST['reason']) ? sanitize_key((string) $_POST['reason']) : '';
-        $freeText = isset($_POST['free_text']) ? sanitize_textarea_field((string) $_POST['free_text']) : '';
+		wp_send_json_success( $payload );
+	}
 
-        $payload = $this->flowEngine->submitSurvey($eventId, $reason, $freeText);
-        wp_send_json_success($payload);
-    }
+	public function ajaxSubmitSurvey(): void {
+		check_ajax_referer( 'churnstop_flow', 'nonce' );
+		$eventId  = isset( $_POST['event_id'] ) ? (int) $_POST['event_id'] : 0;
+		$reason   = isset( $_POST['reason'] ) ? sanitize_key( (string) $_POST['reason'] ) : '';
+		$freeText = isset( $_POST['free_text'] ) ? sanitize_textarea_field( (string) $_POST['free_text'] ) : '';
 
-    public function ajaxAcceptOffer(): void
-    {
-        check_ajax_referer('churnstop_flow', 'nonce');
-        $eventId = isset($_POST['event_id']) ? (int) $_POST['event_id'] : 0;
+		$payload = $this->flowEngine->submitSurvey( $eventId, $reason, $freeText );
+		wp_send_json_success( $payload );
+	}
 
-        $result = $this->flowEngine->acceptOffer($eventId);
-        wp_send_json_success($result);
-    }
+	public function ajaxAcceptOffer(): void {
+		check_ajax_referer( 'churnstop_flow', 'nonce' );
+		$eventId = isset( $_POST['event_id'] ) ? (int) $_POST['event_id'] : 0;
 
-    public function ajaxDeclineAndCancel(): void
-    {
-        check_ajax_referer('churnstop_flow', 'nonce');
-        $eventId = isset($_POST['event_id']) ? (int) $_POST['event_id'] : 0;
+		$result = $this->flowEngine->acceptOffer( $eventId );
+		wp_send_json_success( $result );
+	}
 
-        $result = $this->flowEngine->declineAndCancel($eventId);
-        wp_send_json_success($result);
-    }
+	public function ajaxDeclineAndCancel(): void {
+		check_ajax_referer( 'churnstop_flow', 'nonce' );
+		$eventId = isset( $_POST['event_id'] ) ? (int) $_POST['event_id'] : 0;
 
-    private function currentUserOwnsSubscription(int $subscriptionId): bool
-    {
-        if (!function_exists('wcs_get_subscription')) {
-            return false;
-        }
+		$result = $this->flowEngine->declineAndCancel( $eventId );
+		wp_send_json_success( $result );
+	}
 
-        $subscription = wcs_get_subscription($subscriptionId);
+	private function currentUserOwnsSubscription( int $subscriptionId ): bool {
+		if ( ! function_exists( 'wcs_get_subscription' ) ) {
+			return false;
+		}
 
-        return $subscription && (int) $subscription->get_user_id() === get_current_user_id();
-    }
+		$subscription = wcs_get_subscription( $subscriptionId );
+
+		return $subscription && (int) $subscription->get_user_id() === get_current_user_id();
+	}
 }

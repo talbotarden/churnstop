@@ -1,0 +1,24 @@
+parameters:
+  level: 0
+  paths:
+    - src
+    - churnstop.php
+    - uninstall.php
+  excludePaths:
+    - vendor
+    - node_modules
+  # Phase 1: WordPress, WooCommerce, and WC Subscriptions stubs are not yet
+  # bundled (no szepeviktor/phpstan-wordpress dependency). Until that is added,
+  # we run at level 0 (catches only fundamentally broken code) and ignore the
+  # "unknown symbol" noise that comes from analysing a WP plugin without core
+  # stub files. Phase 2 will tighten this when stubs land.
+  ignoreErrors:
+    - identifier: function.notFound
+    - identifier: class.notFound
+    - identifier: constant.notFound
+    - identifier: property.notFound
+    - identifier: method.notFound
+    - identifier: missingType.parameter
+    - identifier: missingType.return
+    - identifier: missingType.iterableValue
+  reportUnmatchedIgnoredErrors: false

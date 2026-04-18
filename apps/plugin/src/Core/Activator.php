@@ -8,77 +8,117 @@ use ChurnStop\Database\Migrations;
 /**
  * Runs on plugin activation. Creates tables and seeds the default flow.
  */
-final class Activator
-{
-    public static function activate(): void
-    {
-        Migrations::run();
+final class Activator {
 
-        // Seed default flow on first activation only.
-        if (!get_option('churnstop_default_flow_seeded')) {
-            self::seedDefaultFlow();
-            update_option('churnstop_default_flow_seeded', 1);
-        }
+	public static function activate(): void {
+		Migrations::run();
 
-        // Flag for welcome redirect on next admin page load.
-        set_transient('churnstop_activation_redirect', 1, 30);
-    }
+		// Seed default flow on first activation only.
+		if ( ! get_option( 'churnstop_default_flow_seeded' ) ) {
+			self::seedDefaultFlow();
+			update_option( 'churnstop_default_flow_seeded', 1 );
+		}
 
-    private static function seedDefaultFlow(): void
-    {
-        global $wpdb;
+		// Flag for welcome redirect on next admin page load.
+		set_transient( 'churnstop_activation_redirect', 1, 30 );
+	}
 
-        $flowsTable = $wpdb->prefix . 'churnstop_flows';
-        $stepsTable = $wpdb->prefix . 'churnstop_flow_steps';
+	private static function seedDefaultFlow(): void {
+		global $wpdb;
 
-        $wpdb->insert($flowsTable, [
-            'name' => 'Default Cancellation Flow',
-            'trigger_event' => 'wc_subs_cancel_clicked',
-            'is_active' => 1,
-            'created_at' => current_time('mysql'),
-        ]);
+		$flowsTable = $wpdb->prefix . 'churnstop_flows';
+		$stepsTable = $wpdb->prefix . 'churnstop_flow_steps';
 
-        $flowId = (int) $wpdb->insert_id;
+		$wpdb->insert(
+			$flowsTable,
+			array(
+				'name'          => 'Default Cancellation Flow',
+				'trigger_event' => 'wc_subs_cancel_clicked',
+				'is_active'     => 1,
+				'created_at'    => current_time( 'mysql' ),
+			)
+		);
 
-        // Step 1: survey.
-        $wpdb->insert($stepsTable, [
-            'flow_id' => $flowId,
-            'step_order' => 1,
-            'step_type' => 'survey',
-            'config_json' => wp_json_encode([
-                'question' => 'What is your main reason for cancelling?',
-                'required' => true,
-                'options' => [
-                    ['id' => 'too_expensive', 'label' => 'Too expensive'],
-                    ['id' => 'not_using', 'label' => 'Not using it enough'],
-                    ['id' => 'missing_feature', 'label' => 'Missing a feature I need'],
-                    ['id' => 'switching', 'label' => 'Switching to a different tool'],
-                    ['id' => 'technical', 'label' => 'Technical issues'],
-                    ['id' => 'other', 'label' => 'Other'],
-                ],
-                'open_text_followup' => true,
-                'open_text_required' => false,
-            ]),
-        ]);
+		$flowId = (int) $wpdb->insert_id;
 
-        // Step 2: offer.
-        $wpdb->insert($stepsTable, [
-            'flow_id' => $flowId,
-            'step_order' => 2,
-            'step_type' => 'offer',
-            'config_json' => wp_json_encode([
-                'default_offer' => [
-                    'type' => 'discount',
-                    'value' => 20,
-                    'duration_billing_cycles' => 3,
-                ],
-                'conditional' => [
-                    'too_expensive' => ['type' => 'discount', 'value' => 25, 'duration_billing_cycles' => 3],
-                    'not_using' => ['type' => 'pause', 'duration_days' => 30],
-                    'switching' => ['type' => 'discount', 'value' => 30, 'duration_billing_cycles' => 6],
-                    'technical' => ['type' => 'support_route'],
-                ],
-            ]),
-        ]);
-    }
+		// Step 1: survey.
+		$wpdb->insert(
+			$stepsTable,
+			array(
+				'flow_id'     => $flowId,
+				'step_order'  => 1,
+				'step_type'   => 'survey',
+				'config_json' => wp_json_encode(
+					array(
+						'question'           => 'What is your main reason for cancelling?',
+						'required'           => true,
+						'options'            => array(
+							array(
+								'id'    => 'too_expensive',
+								'label' => 'Too expensive',
+							),
+							array(
+								'id'    => 'not_using',
+								'label' => 'Not using it enough',
+							),
+							array(
+								'id'    => 'missing_feature',
+								'label' => 'Missing a feature I need',
+							),
+							array(
+								'id'    => 'switching',
+								'label' => 'Switching to a different tool',
+							),
+							array(
+								'id'    => 'technical',
+								'label' => 'Technical issues',
+							),
+							array(
+								'id'    => 'other',
+								'label' => 'Other',
+							),
+						),
+						'open_text_followup' => true,
+						'open_text_required' => false,
+					)
+				),
+			)
+		);
+
+		// Step 2: offer.
+		$wpdb->insert(
+			$stepsTable,
+			array(
+				'flow_id'     => $flowId,
+				'step_order'  => 2,
+				'step_type'   => 'offer',
+				'config_json' => wp_json_encode(
+					array(
+						'default_offer' => array(
+							'type'                    => 'discount',
+							'value'                   => 20,
+							'duration_billing_cycles' => 3,
+						),
+						'conditional'   => array(
+							'too_expensive' => array(
+								'type'                    => 'discount',
+								'value'                   => 25,
+								'duration_billing_cycles' => 3,
+							),
+							'not_using'     => array(
+								'type'          => 'pause',
+								'duration_days' => 30,
+							),
+							'switching'     => array(
+								'type'                    => 'discount',
+								'value'                   => 30,
+								'duration_billing_cycles' => 6,
+							),
+							'technical'     => array( 'type' => 'support_route' ),
+						),
+					)
+				),
+			)
+		);
+	}
 }

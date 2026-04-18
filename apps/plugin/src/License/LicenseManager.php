@@ -13,100 +13,111 @@ namespace ChurnStop\License;
  *
  * If the license server is unreachable, cached entitlements remain valid.
  */
-final class LicenseManager
-{
-    public const ENTITLEMENTS_OPTION = 'churnstop_entitlements';
+final class LicenseManager {
 
-    public const LICENSE_KEY_OPTION = 'churnstop_license_key';
+	public const ENTITLEMENTS_OPTION = 'churnstop_entitlements';
 
-    public const REFRESH_HOOK = 'churnstop_license_refresh';
+	public const LICENSE_KEY_OPTION = 'churnstop_license_key';
 
-    private const API_BASE = 'https://api.churnstop.org';
+	public const REFRESH_HOOK = 'churnstop_license_refresh';
 
-    private const REFRESH_INTERVAL_HOURS = 12;
+	private const API_BASE = 'https://api.churnstop.org';
 
-    public function has(string $feature): bool
-    {
-        $entitlements = (array) get_option(self::ENTITLEMENTS_OPTION, []);
+	private const REFRESH_INTERVAL_HOURS = 12;
 
-        return in_array($feature, $entitlements['features'] ?? [], true);
-    }
+	public function has( string $feature ): bool {
+		$entitlements = (array) get_option( self::ENTITLEMENTS_OPTION, array() );
 
-    public function isActive(): bool
-    {
-        return (string) get_option(self::LICENSE_KEY_OPTION, '') !== '';
-    }
+		return in_array( $feature, $entitlements['features'] ?? array(), true );
+	}
 
-    /**
-     * @return array{ok: bool, message?: string}
-     */
-    public function activate(string $key): array
-    {
-        $response = wp_remote_post(self::API_BASE . '/license/verify', [
-            'timeout' => 15,
-            'headers' => ['Content-Type' => 'application/json'],
-            'body' => wp_json_encode([
-                'key' => $key,
-                'site_url' => home_url(),
-            ]),
-        ]);
+	public function isActive(): bool {
+		return (string) get_option( self::LICENSE_KEY_OPTION, '' ) !== '';
+	}
 
-        if (is_wp_error($response)) {
-            return ['ok' => false, 'message' => $response->get_error_message()];
-        }
+	/**
+	 * @return array{ok: bool, message?: string}
+	 */
+	public function activate( string $key ): array {
+		$response = wp_remote_post(
+			self::API_BASE . '/license/verify',
+			array(
+				'timeout' => 15,
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode(
+					array(
+						'key'      => $key,
+						'site_url' => home_url(),
+					)
+				),
+			)
+		);
 
-        $code = (int) wp_remote_retrieve_response_code($response);
-        $body = json_decode((string) wp_remote_retrieve_body($response), true);
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'ok'      => false,
+				'message' => $response->get_error_message(),
+			);
+		}
 
-        if ($code !== 200 || empty($body['ok'])) {
-            return ['ok' => false, 'message' => $body['error'] ?? __('License verification failed.', 'churnstop')];
-        }
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 
-        update_option(self::LICENSE_KEY_OPTION, $key);
-        update_option(self::ENTITLEMENTS_OPTION, $body['entitlements'] ?? []);
+		if ( $code !== 200 || empty( $body['ok'] ) ) {
+			return array(
+				'ok'      => false,
+				'message' => $body['error'] ?? __( 'License verification failed.', 'churnstop' ),
+			);
+		}
 
-        if (!wp_next_scheduled(self::REFRESH_HOOK)) {
-            wp_schedule_event(time() + HOUR_IN_SECONDS * self::REFRESH_INTERVAL_HOURS, 'twicedaily', self::REFRESH_HOOK);
-        }
+		update_option( self::LICENSE_KEY_OPTION, $key );
+		update_option( self::ENTITLEMENTS_OPTION, $body['entitlements'] ?? array() );
 
-        return ['ok' => true];
-    }
+		if ( ! wp_next_scheduled( self::REFRESH_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS * self::REFRESH_INTERVAL_HOURS, 'twicedaily', self::REFRESH_HOOK );
+		}
 
-    public function deactivate(): void
-    {
-        delete_option(self::LICENSE_KEY_OPTION);
-        delete_option(self::ENTITLEMENTS_OPTION);
-        wp_clear_scheduled_hook(self::REFRESH_HOOK);
-    }
+		return array( 'ok' => true );
+	}
 
-    /**
-     * Called by the scheduled refresh event. Silent on failure.
-     */
-    public function refreshEntitlements(): void
-    {
-        $key = (string) get_option(self::LICENSE_KEY_OPTION, '');
+	public function deactivate(): void {
+		delete_option( self::LICENSE_KEY_OPTION );
+		delete_option( self::ENTITLEMENTS_OPTION );
+		wp_clear_scheduled_hook( self::REFRESH_HOOK );
+	}
 
-        if ($key === '') {
-            return;
-        }
+	/**
+	 * Called by the scheduled refresh event. Silent on failure.
+	 */
+	public function refreshEntitlements(): void {
+		$key = (string) get_option( self::LICENSE_KEY_OPTION, '' );
 
-        $response = wp_remote_post(self::API_BASE . '/license/entitlements', [
-            'timeout' => 15,
-            'headers' => ['Content-Type' => 'application/json'],
-            'body' => wp_json_encode([
-                'key' => $key,
-                'site_url' => home_url(),
-            ]),
-        ]);
+		if ( $key === '' ) {
+			return;
+		}
 
-        if (is_wp_error($response)) {
-            return;
-        }
+		$response = wp_remote_post(
+			self::API_BASE . '/license/entitlements',
+			array(
+				'timeout' => 15,
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode(
+					array(
+						'key'      => $key,
+						'site_url' => home_url(),
+					)
+				),
+			)
+		);
 
-        $body = json_decode((string) wp_remote_retrieve_body($response), true);
+		if ( is_wp_error( $response ) ) {
+			return;
+		}
 
-        if (!empty($body['entitlements'])) {
-            update_option(self::ENTITLEMENTS_OPTION, $body['entitlements']);
-        }
-    }
+		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+
+		if ( ! empty( $body['entitlements'] ) ) {
+			update_option( self::ENTITLEMENTS_OPTION, $body['entitlements'] );
+		}
+	}
 }

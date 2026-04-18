@@ -14,54 +14,53 @@ use ChurnStop\Subscriptions\CancellationInterceptor;
 /**
  * Main plugin bootstrap. Singleton pattern; wires the subsystems together.
  */
-final class Plugin
-{
-    private static ?Plugin $instance = null;
+final class Plugin {
 
-    private Container $container;
+	private static ?Plugin $instance = null;
 
-    private bool $booted = false;
+	private Container $container;
 
-    public static function instance(): Plugin
-    {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
+	private bool $booted = false;
 
-        return self::$instance;
-    }
+	public static function instance(): Plugin {
+		if ( self::$instance === null ) {
+			self::$instance = new self();
+		}
 
-    private function __construct()
-    {
-        $this->container = new Container();
-    }
+		return self::$instance;
+	}
 
-    public function boot(): void
-    {
-        if ($this->booted) {
-            return;
-        }
+	private function __construct() {
+		$this->container = new Container();
+	}
 
-        // Core subsystems.
-        $license = new LicenseManager();
-        $flowEngine = new FlowEngine($license);
-        $compliance = new ClickToCancel();
+	public function boot(): void {
+		if ( $this->booted ) {
+			return;
+		}
 
-        // Register listeners.
-        (new CancellationInterceptor($flowEngine, $compliance))->register();
-        (new Admin($license, $flowEngine))->register();
-        (new RestRoutes($flowEngine))->register();
+		// Core subsystems.
+		$license    = new LicenseManager();
+		$flowEngine = new FlowEngine( $license );
+		$compliance = new ClickToCancel();
 
-        // Load translations.
-        add_action('init', static function (): void {
-            load_plugin_textdomain('churnstop', false, dirname(CHURNSTOP_BASENAME) . '/languages');
-        });
+		// Register listeners.
+		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
+		( new Admin( $license, $flowEngine ) )->register();
+		( new RestRoutes( $flowEngine ) )->register();
 
-        $this->booted = true;
-    }
+		// Load translations.
+		add_action(
+			'init',
+			static function (): void {
+				load_plugin_textdomain( 'churnstop', false, dirname( CHURNSTOP_BASENAME ) . '/languages' );
+			}
+		);
 
-    public function container(): Container
-    {
-        return $this->container;
-    }
+		$this->booted = true;
+	}
+
+	public function container(): Container {
+		return $this->container;
+	}
 }
