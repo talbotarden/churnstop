@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+vendor/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# WordPress-specific
+apps/plugin/vendor/
+apps/plugin/assets/admin/build/
+apps/plugin/assets/modal/build/
+apps/plugin/languages/*.mo
+
+# Release artifacts
+*.zip
+apps/plugin/dist/
+
+# Test output
+coverage/
+.phpunit.result.cache

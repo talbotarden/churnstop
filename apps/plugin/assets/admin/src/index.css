@@ -1,0 +1,211 @@
+/**
+ * Scoped admin styles. Uses WordPress admin design tokens where possible so the
+ * UI feels native and respects dark-mode admin themes.
+ */
+
+#churnstop-app {
+  max-width: 1080px;
+  padding: 24px 4px;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+#churnstop-app h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+#churnstop-app .cs-subtitle {
+  color: #6b7280;
+  margin: 0 0 28px 0;
+}
+
+#churnstop-app .cs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  #churnstop-app .cs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#churnstop-app .cs-stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+#churnstop-app .cs-stat-card .cs-stat-label {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 6px 0;
+  font-weight: 500;
+}
+
+#churnstop-app .cs-stat-card .cs-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0f1419;
+  line-height: 1.1;
+  margin: 0 0 4px 0;
+}
+
+#churnstop-app .cs-stat-card .cs-stat-help {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 0;
+}
+
+#churnstop-app .cs-section {
+  margin-top: 32px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+#churnstop-app .cs-section h2 {
+  margin: 0 0 4px 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#churnstop-app .cs-section .cs-section-help {
+  color: #6b7280;
+  margin: 0 0 20px 0;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+#churnstop-app .cs-field label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+}
+
+#churnstop-app .cs-field .cs-field-help {
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+#churnstop-app .cs-field input[type="text"],
+#churnstop-app .cs-field input[type="number"],
+#churnstop-app .cs-field input[type="url"] {
+  width: 100%;
+  max-width: 400px;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+#churnstop-app .cs-field input[type="color"] {
+  width: 56px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#churnstop-app .cs-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+#churnstop-app .cs-row .cs-field {
+  min-width: 180px;
+  flex: 1;
+}
+
+#churnstop-app .cs-reason-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+#churnstop-app .cs-reason-row:last-child {
+  border-bottom: none;
+}
+
+#churnstop-app .cs-reason-row input[type="text"] {
+  flex: 1;
+  max-width: none;
+}
+
+#churnstop-app .cs-reason-row input[type="checkbox"] {
+  margin: 0;
+}
+
+#churnstop-app .cs-reason-row button {
+  background: transparent;
+  border: none;
+  color: #b91c1c;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-reason-row button:hover {
+  background: #fef2f2;
+}
+
+#churnstop-app .cs-save-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+}
+
+#churnstop-app .cs-save-bar .cs-save-status {
+  flex: 1;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-save-bar .cs-save-status.cs-saved {
+  color: #059669;
+}
+
+#churnstop-app .cs-save-bar .cs-save-status.cs-error {
+  color: #b91c1c;
+}
+
+#churnstop-app .cs-compliance-notice {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  color: #075985;
+  font-size: 13px;
+}
+
+#churnstop-app .cs-compliance-notice strong {
+  color: #0c4a6e;
+}
