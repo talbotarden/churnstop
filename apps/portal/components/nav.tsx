@@ -1,13 +1,27 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { site } from '@/lib/site';
 
 export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-soft bg-[var(--bg)]/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Logo />
-          <span className="text-[15px] font-semibold tracking-tightish">{site.name}</span>
+        <Link
+          href="/"
+          className="flex items-center"
+          aria-label={`${site.name} home`}
+        >
+          {/* Logo is a 3:2 wordmark lockup. Rendered at 36px tall in the nav */}
+          {/* (54px wide at the source ratio). Next/Image optimises and lazy-loads */}
+          {/* correctly; priority is on so it appears on first paint without shift. */}
+          <Image
+            src="/churnstop-logo.png"
+            alt={site.name}
+            width={612}
+            height={408}
+            priority
+            className="h-9 w-auto dark:invert"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted">
@@ -38,20 +52,5 @@ export function Nav() {
         </div>
       </div>
     </header>
-  );
-}
-
-function Logo() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
-      <rect x="1" y="1" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M6.5 11.5L9.5 14.5L15.5 7.5"
-        stroke="#0B6E4F"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
