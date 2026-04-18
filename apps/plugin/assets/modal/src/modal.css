@@ -303,3 +303,53 @@ html.dark-mode .churnstop-modal-backdrop .churnstop-option:has(input:checked) {
   background: #334155;
   border-color: #e5e7eb;
 }
+
+/* ------------------ Error state ------------------ */
+
+.churnstop-modal .churnstop-error h2 {
+  color: #991b1b;
+}
+
+.churnstop-modal .churnstop-error-help {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* ------------------ Selected radio option ------------------ */
+
+.churnstop-modal .churnstop-option-selected {
+  border-color: var(--churnstop-accent, #0b6e4f);
+  background: rgba(11, 110, 79, 0.04);
+}
+
+/* ------------------ Free-text wrap ------------------ */
+
+.churnstop-modal .churnstop-textarea-wrap {
+  margin-top: 12px;
+}
+
+.churnstop-modal .churnstop-textarea-wrap textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 72px;
+}
+
+.churnstop-modal .churnstop-textarea-wrap textarea:focus {
+  outline: none;
+  border-color: var(--churnstop-accent, #0b6e4f);
+  box-shadow: 0 0 0 3px rgba(11, 110, 79, 0.15);
+}
+
+/* ------------------ Loading state ------------------ */
+
+.churnstop-modal .churnstop-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
