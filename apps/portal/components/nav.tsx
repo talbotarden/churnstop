@@ -12,17 +12,15 @@ export function Nav() {
           aria-label={`${site.name} home`}
         >
           {/* Brand wordmark, pre-cropped asset at 413x120 (~3.4:1). Rendered */}
-          {/* at 32px tall in the nav (~110px wide at source ratio). priority */}
-          {/* so it appears in first paint with no layout shift. Colors are */}
-          {/* preserved as-delivered (no dark:invert); the mark is designed to */}
-          {/* read on light and dark backgrounds without modification. */}
+          {/* at 40px tall in the nav (~138px wide at source ratio). priority */}
+          {/* so it appears in first paint with no layout shift. */}
           <Image
             src="/churnstop-logo.png"
             alt={site.name}
             width={413}
             height={120}
             priority
-            className="h-8 w-auto"
+            className="h-10 w-auto"
           />
         </Link>
 
