@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/json-ld';
+import { CheckoutButton } from '@/components/checkout-button';
 import { softwareApplicationSchema } from '@/lib/schema/software-application';
 import { faqItems, faqPageSchema } from '@/lib/schema/faq';
 
@@ -12,14 +13,17 @@ export const metadata: Metadata = {
 
 type FeatureItem = { text: string; status?: 'coming-soon' };
 
+type CheckoutTier = 'starter' | 'growth' | 'agency';
+
 type Tier = {
   name: string;
   price: string;
   tagline: string;
   features: FeatureItem[];
   cta: string;
-  href: string;
+  href?: string;
   ctaNote?: string;
+  checkout?: CheckoutTier;
 };
 
 const tiers: Tier[] = [
@@ -51,9 +55,9 @@ const tiers: Tier[] = [
       { text: 'Email support' },
       { text: 'A/B testing', status: 'coming-soon' },
     ],
-    cta: 'Join waitlist',
-    href: '#waitlist',
-    ctaNote: 'Paid checkout opens after wp.org listing',
+    cta: 'Start checkout',
+    checkout: 'starter',
+    ctaNote: 'Falls through to waitlist if Stripe is not configured yet',
   },
   {
     name: 'Growth',
@@ -66,9 +70,9 @@ const tiers: Tier[] = [
       { text: 'Winback email automation (7/21/60-day sequence)', status: 'coming-soon' },
       { text: 'Customer segmentation', status: 'coming-soon' },
     ],
-    cta: 'Join waitlist',
-    href: '#waitlist',
-    ctaNote: 'Paid checkout opens after wp.org listing',
+    cta: 'Start checkout',
+    checkout: 'growth',
+    ctaNote: 'Falls through to waitlist if Stripe is not configured yet',
   },
   {
     name: 'Agency',
@@ -81,9 +85,9 @@ const tiers: Tier[] = [
       { text: 'Multi-site central management', status: 'coming-soon' },
       { text: 'Cross-store benchmarks', status: 'coming-soon' },
     ],
-    cta: 'Join waitlist',
-    href: '#waitlist',
-    ctaNote: 'Paid checkout opens after wp.org listing',
+    cta: 'Start checkout',
+    checkout: 'agency',
+    ctaNote: 'Falls through to waitlist if Stripe is not configured yet',
   },
 ];
 
@@ -118,12 +122,16 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={tier.href}
-                className="mt-6 rounded-md bg-ink px-4 py-2 text-center text-white hover:opacity-90 dark:bg-white dark:text-ink"
-              >
-                {tier.cta}
-              </a>
+              {tier.checkout ? (
+                <CheckoutButton tier={tier.checkout} label={tier.cta} />
+              ) : (
+                <a
+                  href={tier.href ?? '#'}
+                  className="mt-6 rounded-md bg-ink px-4 py-2 text-center text-white hover:opacity-90 dark:bg-white dark:text-ink"
+                >
+                  {tier.cta}
+                </a>
+              )}
               {tier.ctaNote ? (
                 <p className="mt-2 text-[11px] text-muted-2 text-center">{tier.ctaNote}</p>
               ) : null}

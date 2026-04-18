@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { JsonLd } from '@/components/json-ld';
 import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
 import { site } from '@/lib/site';
+import { CheckoutResult } from '@/components/checkout-result';
 
 export const metadata: Metadata = {
   title: 'Account',
@@ -29,12 +31,16 @@ export default function AccountPage() {
           <span>Account</span>
         </nav>
 
+        <Suspense fallback={null}>
+          <CheckoutResult />
+        </Suspense>
+
         <div className="eyebrow">Account</div>
         <h1 className="mt-3 text-[32px] lg:text-[40px] leading-tight tracking-tightish font-semibold">
-          The customer portal ships with the paid tier.
+          Manage your ChurnStop license.
         </h1>
         <p className="mt-5 text-[17px] text-muted leading-relaxed max-w-[58ch]">
-          The ChurnStop paid tier (Starter, Growth, Agency) is in pre-launch. When paid checkout opens, this page will become the portal for managing your license keys, changing billing details, and downloading the latest plugin build. Until then, the free tier is the only public release and no account is required.
+          After Stripe checkout we email your license key and show it on this page. Paste it into ChurnStop -&gt; Settings -&gt; License in WP Admin to unlock paid features. The free plugin does not require an account or license.
         </p>
 
         <section className="mt-12 grid gap-4 sm:grid-cols-2">
@@ -52,11 +58,11 @@ export default function AccountPage() {
             </Link>
           </div>
 
-          <div className="rounded-xl border border-strong p-5 opacity-90">
+          <div className="rounded-xl border border-strong p-5">
             <div className="eyebrow">Paid tiers</div>
-            <h2 className="mt-2 text-[17px] font-semibold tracking-tightish">Portal coming soon</h2>
+            <h2 className="mt-2 text-[17px] font-semibold tracking-tightish">License + billing</h2>
             <p className="mt-2 text-[14px] text-muted leading-relaxed">
-              When Stripe checkout launches, the portal will live here. Self-service license, billing, and downloads. Existing waitlist subscribers get notified first.
+              Subscribe on the pricing page and we email your license key. Change plans or cancel at any time from the Stripe customer portal linked in each invoice email.
             </p>
             <Link
               href="/pricing"
