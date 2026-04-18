@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace ChurnStop\Rest;
 
+use ChurnStop\Analytics\CohortLtv;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Settings;
 use ChurnStop\Experiments\AbTestManager;
@@ -21,10 +22,13 @@ final class RestRoutes {
 
 	private AbTestManager $abTest;
 
-	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null, ?AbTestManager $abTest = null ) {
+	private CohortLtv $cohortLtv;
+
+	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null, ?AbTestManager $abTest = null, ?CohortLtv $cohortLtv = null ) {
 		$this->flowEngine = $flowEngine;
 		$this->license    = $license ?? new LicenseManager();
 		$this->abTest     = $abTest ?? new AbTestManager( $this->license );
+		$this->cohortLtv  = $cohortLtv ?? new CohortLtv( $this->license );
 	}
 
 	public function register(): void {
@@ -147,6 +151,22 @@ final class RestRoutes {
 						'required'          => true,
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/analytics/cohort-ltv',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'cohortLtv' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
+				'args'                => array(
+					'fresh' => array(
+						'type'              => 'boolean',
+						'sanitize_callback' => 'rest_sanitize_boolean',
 					),
 				),
 			)
@@ -287,6 +307,25 @@ final class RestRoutes {
 		$this->abTest->stopTest( (int) $request->get_param( 'id' ) );
 
 		return rest_ensure_response( array( 'ok' => true ) );
+	}
+
+	public function cohortLtv( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! $this->cohortLtv->isEnabled() ) {
+			return new \WP_REST_Response(
+				array(
+					'error'   => 'cohort_ltv_not_licensed',
+					'message' => __( 'Cohort LTV analytics requires a Growth plan or higher.', 'churnstop' ),
+				),
+				402
+			);
+		}
+
+		$fresh = (bool) $request->get_param( 'fresh' );
+		if ( $fresh ) {
+			$this->cohortLtv->invalidateCache();
+		}
+
+		return rest_ensure_response( $this->cohortLtv->compute( ! $fresh ) );
 	}
 
 	public function getSettings(): \WP_REST_Response {

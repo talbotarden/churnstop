@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ChurnStop;
 
 use ChurnStop\Admin\Admin;
+use ChurnStop\Analytics\CohortLtv;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Container;
 use ChurnStop\Experiments\AbTestManager;
@@ -44,13 +45,14 @@ final class Plugin {
 		// Core subsystems.
 		$license    = new LicenseManager();
 		$abTest     = new AbTestManager( $license );
+		$cohortLtv  = new CohortLtv( $license );
 		$flowEngine = new FlowEngine( $license, $abTest );
 		$compliance = new ClickToCancel();
 
 		// Register listeners.
 		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
 		( new Admin( $license, $flowEngine ) )->register();
-		( new RestRoutes( $flowEngine, $license, $abTest ) )->register();
+		( new RestRoutes( $flowEngine, $license, $abTest, $cohortLtv ) )->register();
 		( new DataSubjectHandlers() )->register();
 
 		// Load translations.

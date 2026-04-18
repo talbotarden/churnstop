@@ -9,6 +9,7 @@ import { Placeholder } from './screens/Placeholder';
 import { Logs } from './screens/Logs';
 import { License } from './screens/License';
 import { AbTests } from './screens/AbTests';
+import { Analytics } from './screens/Analytics';
 
 declare const ChurnStopAdmin: {
   apiUrl: string;
@@ -28,7 +29,7 @@ function App() {
     case 'churnstop-offers':
       return h(Placeholder, { title: 'Offers', body: 'Offer library lets you configure discount, pause, skip-renewal, tier-down, extend-trial, and product-swap offers. Paid tier feature.' });
     case 'churnstop-analytics':
-      return h(Placeholder, { title: 'Analytics', body: 'Save rate by reason, cohort LTV comparisons, and winback attribution. Paid tier feature.' });
+      return h(Analytics, null);
     case 'churnstop-ab':
       return h(AbTests, null);
     case 'churnstop-winback':

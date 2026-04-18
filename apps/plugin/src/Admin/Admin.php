@@ -42,7 +42,7 @@ final class Admin {
 		add_submenu_page( 'churnstop', __( 'Flows', 'churnstop' ), __( 'Flows', 'churnstop' ), 'manage_woocommerce', 'churnstop-flows', array( $this, 'renderMount' ) );
 		add_submenu_page( 'churnstop', __( 'Offers', 'churnstop' ), __( 'Offers', 'churnstop' ), 'manage_woocommerce', 'churnstop-offers', array( $this, 'renderMount' ) );
 
-		if ( $this->license->has( 'analytics' ) ) {
+		if ( $this->license->has( 'cohort_ltv' ) ) {
 			add_submenu_page( 'churnstop', __( 'Analytics', 'churnstop' ), __( 'Analytics', 'churnstop' ), 'manage_woocommerce', 'churnstop-analytics', array( $this, 'renderMount' ) );
 		}
 
@@ -50,7 +50,7 @@ final class Admin {
 			add_submenu_page( 'churnstop', __( 'A/B Tests', 'churnstop' ), __( 'A/B Tests', 'churnstop' ), 'manage_woocommerce', 'churnstop-ab', array( $this, 'renderMount' ) );
 		}
 
-		if ( $this->license->has( 'winback' ) ) {
+		if ( $this->license->has( 'winback_automation' ) ) {
 			add_submenu_page( 'churnstop', __( 'Winback', 'churnstop' ), __( 'Winback', 'churnstop' ), 'manage_woocommerce', 'churnstop-winback', array( $this, 'renderMount' ) );
 		}
 
