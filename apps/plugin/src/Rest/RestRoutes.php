@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ChurnStop\Rest;
 
 use ChurnStop\Analytics\CohortLtv;
+use ChurnStop\Branding\WhiteLabel;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Settings;
 use ChurnStop\Experiments\AbTestManager;
@@ -26,11 +27,14 @@ final class RestRoutes {
 
 	private CohortLtv $cohortLtv;
 
-	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null, ?AbTestManager $abTest = null, ?CohortLtv $cohortLtv = null ) {
+	private WhiteLabel $whiteLabel;
+
+	public function __construct( FlowEngine $flowEngine, ?LicenseManager $license = null, ?AbTestManager $abTest = null, ?CohortLtv $cohortLtv = null, ?WhiteLabel $whiteLabel = null ) {
 		$this->flowEngine = $flowEngine;
 		$this->license    = $license ?? new LicenseManager();
 		$this->abTest     = $abTest ?? new AbTestManager( $this->license );
 		$this->cohortLtv  = $cohortLtv ?? new CohortLtv( $this->license );
+		$this->whiteLabel = $whiteLabel ?? new WhiteLabel( $this->license );
 	}
 
 	public function register(): void {
@@ -154,6 +158,23 @@ final class RestRoutes {
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
 					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/branding',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'getBranding' ),
+					'permission_callback' => array( $this, 'permissionCheck' ),
+				),
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'updateBranding' ),
+					'permission_callback' => array( $this, 'permissionCheck' ),
 				),
 			)
 		);
@@ -329,6 +350,41 @@ final class RestRoutes {
 		$this->abTest->stopTest( (int) $request->get_param( 'id' ) );
 
 		return rest_ensure_response( array( 'ok' => true ) );
+	}
+
+	public function getBranding(): \WP_REST_Response {
+		return rest_ensure_response(
+			array(
+				'enabled'  => $this->whiteLabel->isEnabled(),
+				'branding' => $this->whiteLabel->branding(),
+			)
+		);
+	}
+
+	public function updateBranding( \WP_REST_Request $request ): \WP_REST_Response {
+		if ( ! $this->whiteLabel->isEnabled() ) {
+			return new \WP_REST_Response(
+				array(
+					'error'   => 'white_label_not_licensed',
+					'message' => __( 'White-label branding requires an Agency plan.', 'churnstop' ),
+				),
+				402
+			);
+		}
+
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new \WP_REST_Response( array( 'error' => 'Invalid payload' ), 400 );
+		}
+
+		$saved = $this->whiteLabel->save( $payload );
+
+		return rest_ensure_response(
+			array(
+				'ok'       => true,
+				'branding' => $saved,
+			)
+		);
 	}
 
 	public function winbackSequence(): \WP_REST_Response {

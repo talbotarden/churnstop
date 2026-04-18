@@ -54,6 +54,10 @@ final class Admin {
 			add_submenu_page( 'churnstop', __( 'Winback', 'churnstop' ), __( 'Winback', 'churnstop' ), 'manage_woocommerce', 'churnstop-winback', array( $this, 'renderMount' ) );
 		}
 
+		if ( $this->license->has( 'white_label' ) ) {
+			add_submenu_page( 'churnstop', __( 'Branding', 'churnstop' ), __( 'Branding', 'churnstop' ), 'manage_woocommerce', 'churnstop-branding', array( $this, 'renderMount' ) );
+		}
+
 		add_submenu_page( 'churnstop', __( 'Logs', 'churnstop' ), __( 'Logs', 'churnstop' ), 'manage_woocommerce', 'churnstop-logs', array( $this, 'renderMount' ) );
 		add_submenu_page( 'churnstop', __( 'Settings', 'churnstop' ), __( 'Settings', 'churnstop' ), 'manage_woocommerce', 'churnstop-settings', array( $this, 'renderMount' ) );
 		add_submenu_page( 'churnstop', __( 'License', 'churnstop' ), __( 'License', 'churnstop' ), 'manage_options', 'churnstop-license', array( $this, 'renderMount' ) );

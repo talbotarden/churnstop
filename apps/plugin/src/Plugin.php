@@ -5,6 +5,7 @@ namespace ChurnStop;
 
 use ChurnStop\Admin\Admin;
 use ChurnStop\Analytics\CohortLtv;
+use ChurnStop\Branding\WhiteLabel;
 use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Container;
 use ChurnStop\Experiments\AbTestManager;
@@ -52,14 +53,17 @@ final class Plugin {
 		$flowEngine = new FlowEngine( $license, $abTest );
 		$compliance = new ClickToCancel();
 
+		$whiteLabel = new WhiteLabel( $license );
+
 		// Register listeners.
 		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
 		( new Admin( $license, $flowEngine ) )->register();
-		( new RestRoutes( $flowEngine, $license, $abTest, $cohortLtv ) )->register();
+		( new RestRoutes( $flowEngine, $license, $abTest, $cohortLtv, $whiteLabel ) )->register();
 		( new DataSubjectHandlers() )->register();
 		( new WinbackScheduler( $license ) )->register();
 		( new WinbackSender( $license ) )->register();
 		( new UnsubscribeHandler( $license ) )->register();
+		$whiteLabel->register();
 
 		// Load translations.
 		add_action(

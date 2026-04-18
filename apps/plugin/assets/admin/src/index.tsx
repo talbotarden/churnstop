@@ -11,6 +11,7 @@ import { License } from './screens/License';
 import { AbTests } from './screens/AbTests';
 import { Analytics } from './screens/Analytics';
 import { Winback } from './screens/Winback';
+import { Branding } from './screens/Branding';
 
 declare const ChurnStopAdmin: {
   apiUrl: string;
@@ -35,6 +36,8 @@ function App() {
       return h(AbTests, null);
     case 'churnstop-winback':
       return h(Winback, null);
+    case 'churnstop-branding':
+      return h(Branding, null);
     case 'churnstop-logs':
       return h(Logs, null);
     case 'churnstop-license':
