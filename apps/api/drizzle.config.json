@@ -1,0 +1,10 @@
+{
+  "schema": "./src/db/schema.ts",
+  "out": "./drizzle",
+  "dialect": "postgresql",
+  "dbCredentials": {
+    "url": "postgresql://churnstop_user:8ebb55645e9473fe7df8e132a28aaa39@localhost:5433/churnstop"
+  },
+  "strict": true,
+  "verbose": true
+}

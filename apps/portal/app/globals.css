@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-elev: #fafafa;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --fg: #0a0a0a;
+  --muted: #52525b;
+  --muted-2: #71717a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0a0a0a;
+    --bg-elev: #111113;
+    --border: #1f1f23;
+    --border-strong: #2a2a30;
+    --fg: #fafafa;
+    --muted: #a1a1aa;
+    --muted-2: #71717a;
+  }
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: #0B6E4F;
+  color: #ffffff;
+}
+
+.surface {
+  background: var(--bg-elev);
+}
+.border-soft {
+  border-color: var(--border);
+}
+.border-strong {
+  border-color: var(--border-strong);
+}
+.text-muted {
+  color: var(--muted);
+}
+.text-muted-2 {
+  color: var(--muted-2);
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.shadow-card {
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px -12px rgba(0, 0, 0, 0.08);
+}
