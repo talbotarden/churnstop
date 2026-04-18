@@ -11,16 +11,16 @@ export function Nav() {
           className="flex items-center"
           aria-label={`${site.name} home`}
         >
-          {/* Logo is a 3:2 wordmark lockup. Rendered at 36px tall in the nav */}
-          {/* (54px wide at the source ratio). Next/Image optimises and lazy-loads */}
-          {/* correctly; priority is on so it appears on first paint without shift. */}
+          {/* Logo wordmark, trimmed to its bounding box (397x107, ~3.7:1). */}
+          {/* Rendered at 32px tall in the nav (~119px wide at source ratio). */}
+          {/* priority=true so it appears in first paint with no layout shift. */}
           <Image
             src="/churnstop-logo.png"
             alt={site.name}
-            width={612}
-            height={408}
+            width={397}
+            height={107}
             priority
-            className="h-9 w-auto dark:invert"
+            className="h-8 w-auto dark:invert"
           />
         </Link>
 
