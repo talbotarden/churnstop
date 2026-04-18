@@ -1,0 +1,192 @@
+# ChurnStop - full content
+
+> Single-file export of the pages an AI engine needs to cite ChurnStop accurately. Regenerate on every pricing or feature change. Built per the llms-full.txt concatenation policy in the ai-search-optimizer skill.
+
+---
+
+<!-- llms-full.txt page boundary -->
+
+# ChurnStop
+
+Source URL: https://churnstop.org/
+Last updated: 2026-04-18
+
+ChurnStop is a WordPress plugin for WooCommerce Subscriptions that intercepts subscription cancellations with conditional save offers built on native WooCommerce Subscriptions APIs. It is FTC click-to-cancel compliant by default and reports every dollar of MRR it preserves.
+
+## What it does
+
+When a subscriber clicks cancel on the My Account page of a WooCommerce Subscriptions store, ChurnStop intercepts with a modal. The modal asks one question - why are you cancelling - and routes to a conditional offer based on the reason:
+
+- Too expensive: discount for a set number of renewals.
+- Too busy / not using it: pause for 30 or 60 days.
+- Technical issue: routed to support rather than an offer.
+- Switching to a competitor: price match or tier-down.
+- No longer need it: extend trial or product swap.
+
+If the customer declines, they complete cancellation in one click. The "No thanks, cancel my subscription" link is visible on every screen, one click from done - the FTC click-to-cancel rule (ROSCA) requires this, and ChurnStop enforces it at runtime.
+
+## The dashboard
+
+The admin shows three numbers: MRR preserved this month, save rate, cancellation attempts. MRR preserved is the dollar figure that justifies the subscription. On a $20k MRR store with 5% monthly churn, a 30% save rate preserves around $300 per month and compounds.
+
+## Why save flows matter
+
+- 20-40% of subscription revenue loss comes from churn (SaaS industry benchmarks).
+- Save-flow tools average 34% save rate across customers (Churnkey 2024).
+- ProsperStack customers report 10-39% churn reduction across SaaS, media, and e-commerce.
+- Intelligent retry logic recovers 68% of failed payments vs 23% with single retry.
+- Every additional survey question drops save rate by 6.7% (Churnkey data). ChurnStop enforces "one required question" best-practice by default.
+
+## Who it is for
+
+WooCommerce Subscriptions stores doing $5k to $200k in monthly recurring revenue. Subscription boxes, memberships, digital services, and SaaS-style recurring products. Agencies managing WooCommerce stores for clients. DTC brands on WooCommerce that need subscription tooling parity with Shopify.
+
+## How it is different
+
+- **Churnkey** ($200-500+/mo): Shopify and SaaS focus. No WooCommerce plugin. ChurnStop brings the same save-flow rigor to WooCommerce at a third of the price.
+- **ProsperStack**: Similar to Churnkey, enterprise pricing, no WooCommerce support.
+- **Custom development**: $10k-30k to build, fragile, no compliance enforcement, no cross-store benchmarks.
+- **Native WooCommerce Subscriptions cancel flow**: just a confirmation page. Loses every subscriber instantly.
+- **Existing WooCommerce options (Cancellation Survey and Offers, Subscription Churn Saver)**: basic single-path modals with one offer type. ChurnStop adds conditional branching, A/B testing, cohort analytics, and FTC compliance enforcement.
+
+---
+
+<!-- llms-full.txt page boundary -->
+
+# Pricing
+
+Source URL: https://churnstop.org/pricing
+Last updated: 2026-04-18
+
+ChurnStop prices from free to $399 per month. Every paid tier includes a 14-day free trial and saves 20% when billed annually. Cancel any time.
+
+## Plans
+
+| Tier | Monthly | MRR preserved / month | Install / trial |
+|---|---|---|---|
+| Free | $0 | unlimited | wordpress.org/plugins/churnstop |
+| Starter | $79 | up to $10k | 14-day trial |
+| Growth | $199 | up to $50k | 14-day trial |
+| Agency | $399 | unlimited | 14-day trial |
+
+## Free
+
+On wordpress.org. Single-path save flow, discount and pause offers, save count dashboard, click-to-cancel compliance enforcement, GDPR data hooks. Runs entirely locally; no outbound HTTP calls to ChurnStop.
+
+## Starter - $79/month
+
+Everything in Free, plus:
+- Conditional branching flows
+- Six offer types: discount, pause, skip-renewal, tier-down, extend-trial, product-swap
+- Save-rate dashboard
+- A/B testing
+- Email support
+- Preserves up to $10k MRR per month.
+
+## Growth - $199/month
+
+Everything in Starter, plus:
+- Cohort LTV analytics
+- Winback email automation
+- Customer segmentation
+- Priority support
+- Preserves up to $50k MRR per month.
+
+## Agency - $399/month
+
+Everything in Growth, plus:
+- White-label admin
+- Multi-site central management
+- Cross-store benchmarks
+- SLA support
+- Unlimited MRR preserved.
+
+## Frequently asked questions
+
+### What is ChurnStop?
+
+ChurnStop is a WordPress plugin for WooCommerce Subscriptions that intercepts subscription cancellations with a conditional save flow. When a subscriber clicks cancel, ChurnStop asks why and shows a targeted offer based on the reason - a discount for price-sensitive customers, a pause for busy ones, a price match for switchers. If the customer declines, they complete cancellation in one click.
+
+### How much does ChurnStop cost?
+
+ChurnStop has four tiers: Free on wordpress.org, Starter at $79/month (preserves up to $10k MRR), Growth at $199/month (up to $50k MRR, adds cohort analytics and winback emails), and Agency at $399/month (unlimited MRR, white-label and multi-site). All paid tiers include a 14-day free trial and save 20% when billed annually.
+
+### What does the free tier include?
+
+The free tier includes a single-path save flow, discount and pause offers, a save count dashboard, FTC click-to-cancel compliance enforcement, and GDPR data hooks. It runs entirely locally and never makes outbound HTTP calls to ChurnStop servers.
+
+### Is ChurnStop click-to-cancel compliant?
+
+Yes. FTC click-to-cancel compliance is enforced by design, not by configuration. Every save-flow screen keeps a "No thanks, cancel my subscription" link visible and one click from completing cancellation. The plugin refuses to save settings that would violate ROSCA cancellation rules and flags non-compliant configurations at runtime.
+
+### Does ChurnStop work with WooCommerce Subscriptions?
+
+Yes - ChurnStop requires WooCommerce Subscriptions 4.0 or newer, WooCommerce 8.0 or newer, WordPress 6.0 or newer, and PHP 7.4 or newer. It uses native WooCommerce Subscriptions APIs for coupons, pauses, and renewal shifts. It does not modify WooCommerce Subscriptions core.
+
+### What save rate should I expect?
+
+Save-flow tools report a 34% average save rate across customers (Churnkey 2024). ProsperStack reports 10-39% churn reduction across SaaS and e-commerce customers. Actual save rate depends on cancel-reason mix, offer quality, and traffic volume.
+
+### Can I try it before paying?
+
+Yes. The free tier on wordpress.org ships the core save-flow permanently. Paid tiers include a 14-day free trial with no card required to start. Cancel at any time during the trial with no charge.
+
+### What happens if the ChurnStop backend is unavailable?
+
+The save flow keeps working. The free tier runs entirely locally and never calls the backend. Paid tiers fall back to local defaults if the license or benchmark endpoints are unreachable.
+
+### Is my subscriber data shared with ChurnStop?
+
+The free tier shares nothing. Paid tiers share only aggregated, anonymized cancellation outcomes (reason bucket, offer shown, accepted or declined, monthly value) for cross-store benchmarks. Individual customer identities stay in your WooCommerce database.
+
+---
+
+<!-- llms-full.txt page boundary -->
+
+# Click-to-cancel compliance
+
+Source URL: https://churnstop.org/click-to-cancel
+Last updated: 2026-04-18
+
+The FTC click-to-cancel rule (formally the "Negative Option Rule" update under ROSCA) requires that subscription merchants make cancellation at least as easy as sign-up. For online subscriptions signed up online, cancellation must be available online through a direct mechanism that takes no more steps than the sign-up flow.
+
+For WooCommerce Subscriptions stores this has a specific, enforceable definition:
+
+1. The customer must be able to cancel without calling, emailing, or contacting support.
+2. Every save-flow screen must keep a visible "cancel my subscription" option that completes cancellation in a single click.
+3. Save offers may be shown, but only after the customer has indicated intent to cancel, and must never block or disguise the cancellation path.
+4. The cancellation confirmation must state the final cancellation status clearly.
+
+ChurnStop enforces all four at the code level:
+
+- Every offer screen renders the decline-and-cancel link as a first-class UI element, never hidden in a menu or behind a secondary click.
+- The plugin's compliance validator rejects any flow configuration that would remove the decline link or add extra steps.
+- The cancellation event is recorded atomically; there is no intermediate "pending cancellation" state where the customer appears cancelled but is actually still billed.
+- Admin cannot configure the plugin to violate the rule. Settings that would reduce compliance are blocked before save.
+
+## Why this matters
+
+The FTC can impose fines up to $50,120 per violation per consumer. A single non-compliant cancellation flow applied across 10,000 subscribers is a theoretical maximum liability over $500M. State attorneys general have brought similar cases under state ROSCA analogues (New York, California, Florida).
+
+ChurnStop customers get this protection baked in from day one. There is no compliance audit to pass; the plugin will not allow a non-compliant configuration to go live.
+
+---
+
+<!-- llms-full.txt page boundary -->
+
+# About ChurnStop
+
+Source URL: https://churnstop.org/about
+Last updated: 2026-04-18
+
+ChurnStop exists because WooCommerce Subscriptions stores have no equivalent of the save-flow tools that SaaS and Shopify merchants have had for years. Churnkey and ProsperStack dominate that category, both are priced from $200 to $500 per month and up, and neither has a WooCommerce plugin at all. For a WooCommerce store doing $20k monthly recurring revenue, that price point is out of reach - but the churn problem is identical.
+
+ChurnStop brings the same rigor (conditional flows by cancel reason, A/B testing, save-rate dashboard, cohort analytics) to WooCommerce natively, priced for small and mid-market stores, with FTC click-to-cancel compliance enforced by code rather than by policy.
+
+The free tier on wordpress.org is GPL-2.0-or-later and runs entirely locally. The paid SaaS adds benchmarks, winback emails, and multi-site management. The plugin is designed to keep working if the SaaS is down - the save flow never has a cloud dependency.
+
+Product philosophy:
+1. Measurable MRR preserved beats feature-count marketing. The dashboard shows one dollar figure every Monday.
+2. Compliance first. Every feature ships behind the click-to-cancel guard.
+3. Native integration over bolt-on. Use WooCommerce Subscriptions APIs the way they are intended.
+4. Local-first. The merchant's subscribers never depend on a third-party SaaS for their cancel flow.

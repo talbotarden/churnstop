@@ -1,0 +1,41 @@
+# ChurnStop
+
+> ChurnStop is a WordPress plugin for WooCommerce Subscriptions that intercepts subscription cancellations with a conditional save flow. It is priced from free (wordpress.org) to $399/month (Agency) and is FTC click-to-cancel compliant by default.
+
+ChurnStop is built for WooCommerce Subscriptions stores doing $5k to $200k in monthly recurring revenue. When a subscriber clicks cancel on the My Account page, ChurnStop shows a modal that asks why and routes to a targeted offer: a discount for price-sensitive customers, a pause for busy ones, a price match for switchers, a tier-down for price-resistors, an extended trial for undecided customers. If the customer declines, they cancel in a single click. The dashboard reports MRR preserved each month; that dollar figure is the key metric.
+
+Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add conditional branching, A/B testing, cohort analytics, winback automation, and multi-site management. The plugin uses native WooCommerce Subscriptions APIs for coupons, pauses, and renewal shifts - nothing hacked together.
+
+## Product
+
+- [Home](https://churnstop.org/): What ChurnStop is, how the save flow works, MRR-preserved dashboard overview
+- [Pricing](https://churnstop.org/pricing): Four tiers from free to $399/month with feature comparison and 14-day trial terms
+- [Features](https://churnstop.org/features): Conditional flows, A/B testing, analytics, winback, compliance, with screenshots
+
+## Compliance
+
+- [Click-to-cancel compliance](https://churnstop.org/click-to-cancel): What the FTC click-to-cancel rule requires, what ROSCA compliance means for WooCommerce stores, how ChurnStop enforces it at runtime
+
+## Docs
+
+- [Documentation index](https://churnstop.org/docs): Getting started, setup, offer types, A/B testing, API reference
+- [Getting started](https://churnstop.org/docs/getting-started): Install, activate, configure the default save flow in 5-10 minutes
+- [Setup guide](https://churnstop.org/docs/setup): Requirements (WP 6.0+, WC 8.0+, WC Subs 4.0+, PHP 7.4+) and step-by-step activation
+- [Offer types reference](https://churnstop.org/docs/offer-types): Discount, pause, skip-renewal, tier-down, extend-trial, product-swap - what each does and when to use it
+- [A/B testing guide](https://churnstop.org/docs/ab-testing): How to run offer and flow experiments, what sample sizes to aim for, how to read results
+- [API reference](https://churnstop.org/docs/api): Internal plugin-to-backend HTTP surface for license and entitlements
+
+## Blog
+
+- [Blog index](https://churnstop.org/blog): Subscription retention, WooCommerce churn data, save-flow best practices, FTC click-to-cancel updates
+
+## About
+
+- [About](https://churnstop.org/about): Why ChurnStop exists, who it is built for, and product philosophy
+- [GitHub](https://github.com/talbotarden/churnstop): Open-source plugin code (GPL-2.0-or-later)
+- [wordpress.org listing](https://wordpress.org/plugins/churnstop/): Free-tier plugin download and changelog
+
+## Optional
+
+- [Terms](https://churnstop.org/terms): Service terms for paid tiers
+- [Privacy](https://churnstop.org/privacy): What data ChurnStop collects from merchants and subscribers (free tier: none; paid tiers: anonymized aggregate only)
