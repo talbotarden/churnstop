@@ -8,6 +8,7 @@ use ChurnStop\Compliance\ClickToCancel;
 use ChurnStop\Core\Container;
 use ChurnStop\Flow\FlowEngine;
 use ChurnStop\License\LicenseManager;
+use ChurnStop\Privacy\DataSubjectHandlers;
 use ChurnStop\Rest\RestRoutes;
 use ChurnStop\Subscriptions\CancellationInterceptor;
 
@@ -48,6 +49,7 @@ final class Plugin {
 		( new CancellationInterceptor( $flowEngine, $compliance ) )->register();
 		( new Admin( $license, $flowEngine ) )->register();
 		( new RestRoutes( $flowEngine, $license ) )->register();
+		( new DataSubjectHandlers() )->register();
 
 		// Load translations.
 		add_action(

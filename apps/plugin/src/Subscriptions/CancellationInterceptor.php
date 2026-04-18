@@ -124,6 +124,19 @@ final class CancellationInterceptor {
 			wp_send_json_error( array( 'message' => 'Unauthorised' ), 403 );
 		}
 
+		// Click-to-cancel rate limit: if this subscriber saw a save flow in
+		// the configured window (default 14 days), skip the flow and tell the
+		// modal to fall through to native cancel. Showing the same flow to the
+		// same customer twice in quick succession reads as harassment.
+		if ( $this->flowEngine->shouldSkipFlow( $subscriptionId ) ) {
+			wp_send_json_success(
+				array(
+					'no_flow' => true,
+					'reason' => 'rate_limited',
+				)
+			);
+		}
+
 		$payload = $this->flowEngine->startForSubscription( $subscriptionId );
 
 		wp_send_json_success( $payload );

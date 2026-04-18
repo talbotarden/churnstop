@@ -28,6 +28,13 @@ final class Settings {
 			'default_discount_cycles'  => 3,
 			'default_pause_days'       => 30,
 
+			// Rate limit: if the same subscriber sees a save flow within this
+			// many days, subsequent cancel clicks skip the flow and go direct
+			// to native cancellation. 0 disables. Click-to-cancel compliance
+			// recommends a non-zero value so the same customer cannot be
+			// cycled through the same offer repeatedly.
+			'rate_limit_days'          => 14,
+
 			'cancel_reasons'           => array(
 				array(
 					'id'      => 'too_expensive',
@@ -135,6 +142,10 @@ final class Settings {
 
 		if ( isset( $in['default_discount_cycles'] ) ) {
 			$out['default_discount_cycles'] = max( 1, min( 36, (int) $in['default_discount_cycles'] ) );
+		}
+
+		if ( isset( $in['rate_limit_days'] ) ) {
+			$out['rate_limit_days'] = max( 0, min( 365, (int) $in['rate_limit_days'] ) );
 		}
 
 		if ( isset( $in['default_pause_days'] ) ) {

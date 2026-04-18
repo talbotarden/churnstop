@@ -56,6 +56,24 @@ type PauseOffer = {
 
 type SkipRenewalOffer = { type: 'skip_renewal' };
 
+type TierDownOffer = {
+  type: 'tier_down';
+  target_product_id?: number;
+  target_product_name?: string;
+  target_price_label?: string;
+};
+
+type ExtendTrialOffer = {
+  type: 'extend_trial';
+  duration_days?: number;
+};
+
+type ProductSwapOffer = {
+  type: 'product_swap';
+  target_product_id?: number;
+  target_product_name?: string;
+};
+
 type SupportRouteOffer = {
   type: 'support_route';
   support_url?: string;
@@ -63,7 +81,14 @@ type SupportRouteOffer = {
   message?: string;
 };
 
-type Offer = DiscountOffer | PauseOffer | SkipRenewalOffer | SupportRouteOffer;
+type Offer =
+  | DiscountOffer
+  | PauseOffer
+  | SkipRenewalOffer
+  | TierDownOffer
+  | ExtendTrialOffer
+  | ProductSwapOffer
+  | SupportRouteOffer;
 
 type StepOffer = { type: 'offer'; offer: Offer };
 
@@ -344,6 +369,19 @@ function offerHeading(offer: Offer): string {
   if (offer.type === 'skip_renewal') {
     return 'Skip your next renewal.';
   }
+  if (offer.type === 'tier_down') {
+    return offer.target_product_name
+      ? `Switch to ${offer.target_product_name} instead.`
+      : 'Switch to a cheaper plan instead.';
+  }
+  if (offer.type === 'extend_trial') {
+    return `Extend your trial by ${offer.duration_days ?? 14} days.`;
+  }
+  if (offer.type === 'product_swap') {
+    return offer.target_product_name
+      ? `Switch to ${offer.target_product_name} instead.`
+      : 'Switch to a different product instead.';
+  }
   return 'We can help.';
 }
 
@@ -357,6 +395,17 @@ function offerDescription(offer: Offer): string {
   if (offer.type === 'skip_renewal') {
     return 'Your next renewal date is pushed out one billing cycle. You stay subscribed with no charge this cycle.';
   }
+  if (offer.type === 'tier_down') {
+    return offer.target_price_label
+      ? `Your subscription moves to the cheaper plan at ${offer.target_price_label}. You keep billing active, just at a lower price.`
+      : 'Your subscription moves to a cheaper plan. Billing continues at the new lower price.';
+  }
+  if (offer.type === 'extend_trial') {
+    return 'We will add the extra days to your current trial. No charge until the new end date.';
+  }
+  if (offer.type === 'product_swap') {
+    return 'Your subscription switches to the different product at the same billing schedule. You can swap back any time.';
+  }
   return '';
 }
 
@@ -364,6 +413,9 @@ function offerAcceptLabel(offer: Offer): string {
   if (offer.type === 'discount') return 'Accept discount';
   if (offer.type === 'pause') return 'Pause subscription';
   if (offer.type === 'skip_renewal') return 'Skip next renewal';
+  if (offer.type === 'tier_down') return 'Switch plan';
+  if (offer.type === 'extend_trial') return 'Extend trial';
+  if (offer.type === 'product_swap') return 'Swap product';
   return 'Accept';
 }
 

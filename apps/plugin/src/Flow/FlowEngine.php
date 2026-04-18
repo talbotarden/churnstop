@@ -59,12 +59,63 @@ final class FlowEngine {
 
 		$eventId = (int) $wpdb->insert_id;
 
+		/**
+		 * Fires when a subscriber clicks cancel and the save flow starts.
+		 *
+		 * @param int   $eventId        Cancellation event row id.
+		 * @param int   $subscriptionId WC Subscriptions id.
+		 * @param array $context        user_id, monthly_value_cents, platform, external_subscription_id.
+		 */
+		do_action(
+			'churnstop_cancellation_started',
+			$eventId,
+			$subscriptionId,
+			array(
+				'user_id'                  => get_current_user_id(),
+				'monthly_value_cents'      => $monthlyValue,
+				'platform'                 => 'woocommerce',
+				'external_subscription_id' => (string) $subscriptionId,
+			)
+		);
+
 		$firstStep = $this->getFirstStep( (int) $flow['id'] );
 
 		return array(
 			'event_id' => $eventId,
 			'step'     => $firstStep,
 		);
+	}
+
+	/**
+	 * True if the subscriber should bypass the save flow because they already
+	 * saw one recently. 14 days by default; settable via Settings
+	 * `rate_limit_days`. Zero disables the rate limit. The purpose is
+	 * click-to-cancel compliance: if a customer came back to cancel again,
+	 * showing them the same flow twice in quick succession looks like an
+	 * obstruction to cancel.
+	 */
+	public function shouldSkipFlow( int $subscriptionId ): bool {
+		$windowDays = (int) Settings::get( 'rate_limit_days', 14 );
+
+		if ( $windowDays <= 0 ) {
+			return false;
+		}
+
+		global $wpdb;
+
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $windowDays * DAY_IN_SECONDS ) );
+
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}churnstop_cancellation_events
+				 WHERE subscription_id = %d
+				   AND created_at >= %s",
+				$subscriptionId,
+				$cutoff
+			)
+		);
+
+		return $count > 0;
 	}
 
 	/**
@@ -89,6 +140,15 @@ final class FlowEngine {
 			array( 'id' => $eventId )
 		);
 
+		/**
+		 * Fires after the customer selects a cancellation reason.
+		 *
+		 * @param int    $eventId  Cancellation event row id.
+		 * @param string $reason   Reason id from settings.
+		 * @param string $freeText Optional open-text follow-up.
+		 */
+		do_action( 'churnstop_survey_submitted', $eventId, $reason, $freeText );
+
 		$event     = $this->getEvent( $eventId );
 		$offerStep = $this->getOfferStep( (int) $event['flow_id'] );
 
@@ -98,6 +158,27 @@ final class FlowEngine {
 
 		$config = json_decode( $offerStep['config_json'], true );
 		$offer  = $config['conditional'][ $reason ] ?? $config['default_offer'] ?? null;
+
+		/**
+		 * Swap the offer for a specific reason. Runs after the default routing
+		 * has picked an offer; return a modified offer array (or the same) to
+		 * override. Useful for per-segment offers (e.g. VIPs get a bigger
+		 * discount, beta users get an extended trial).
+		 *
+		 * @param array|null $offer   Offer array (type, value, duration_*, etc.) or null.
+		 * @param string     $reason  Reason id.
+		 * @param array      $context event_id, user_id, subscription_id.
+		 */
+		$offer = apply_filters(
+			'churnstop_offer_for_reason',
+			$offer,
+			$reason,
+			array(
+				'event_id'        => $eventId,
+				'user_id'         => (int) $event['user_id'],
+				'subscription_id' => (int) $event['subscription_id'],
+			)
+		);
 
 		return array(
 			'step' => array(
@@ -127,19 +208,40 @@ final class FlowEngine {
 			return array( 'error' => 'Subscription not found' );
 		}
 
+		$applied = false;
+
 		switch ( $offer['type'] ) {
 			case 'discount':
 				$this->applyDiscount( $subscription, $offer );
+				$applied = true;
 				break;
 			case 'pause':
 				$this->applyPause( $subscription, $offer );
+				$applied = true;
 				break;
 			case 'skip_renewal':
 				$this->skipNextRenewal( $subscription );
+				$applied = true;
+				break;
+			case 'tier_down':
+				$applied = $this->applyTierDown( $subscription, $offer );
+				break;
+			case 'extend_trial':
+				$applied = $this->applyExtendTrial( $subscription, $offer );
+				break;
+			case 'product_swap':
+				$applied = $this->applyProductSwap( $subscription, $offer );
 				break;
 			default:
 				// Unknown offer type; decline safely.
 				return $this->declineAndCancel( $eventId );
+		}
+
+		if ( ! $applied ) {
+			// Executor refused (e.g. extend_trial called after trial ended, tier_down
+			// with no configured target product). Fall through to cancel so the
+			// customer is not stuck in limbo.
+			return $this->declineAndCancel( $eventId );
 		}
 
 		$wpdb->update(
@@ -152,6 +254,24 @@ final class FlowEngine {
 			),
 			array( 'id' => $eventId )
 		);
+
+		/**
+		 * Fires when a save offer is accepted and successfully applied.
+		 *
+		 * @param int   $eventId Cancellation event row id.
+		 * @param array $offer   Applied offer payload (type, value, duration_*).
+		 */
+		do_action( 'churnstop_offer_accepted', $eventId, $offer );
+
+		/**
+		 * Fires when a cancellation event reaches a terminal state (saved or
+		 * cancelled). This is the hook to bind for pushing events into external
+		 * analytics pipelines; it gives the full lifecycle record in one place.
+		 *
+		 * @param int   $eventId Cancellation event row id.
+		 * @param array $event   Full event row after resolution.
+		 */
+		do_action( 'churnstop_cancellation_resolved', $eventId, $this->getEvent( $eventId ) );
 
 		return array(
 			'saved' => true,
@@ -182,6 +302,15 @@ final class FlowEngine {
 			),
 			array( 'id' => $eventId )
 		);
+
+		/**
+		 * Fires on cancellation resolution. Same hook as acceptOffer; both
+		 * terminal paths signal here so downstream analytics only bind once.
+		 *
+		 * @param int   $eventId Cancellation event row id.
+		 * @param array $event   Full event row after resolution.
+		 */
+		do_action( 'churnstop_cancellation_resolved', $eventId, $this->getEvent( $eventId ) );
 
 		return array( 'cancelled' => true );
 	}
@@ -251,6 +380,128 @@ final class FlowEngine {
 		if ( $skipTo ) {
 			$subscription->update_dates( array( 'next_payment' => gmdate( 'Y-m-d H:i:s', $skipTo ) ) );
 		}
+	}
+
+	/**
+	 * Switch the subscription to a cheaper product in the same subscription group.
+	 * Uses WC Subs Switcher API. Requires `target_product_id` in the offer payload.
+	 * Returns false (so the caller falls through to cancel) if the target is not
+	 * configured or the switch is not permitted.
+	 *
+	 * @platform-adapter woocommerce - Phase 2 will mirror this via apps/api/adapters/woocommerce.ts if we move flow execution server-side.
+	 *
+	 * @param array<string, mixed> $offer
+	 */
+	// PLATFORM_ADAPTER: tier-down uses WC_Subscriptions_Switcher in Phase 1.
+	private function applyTierDown( \WC_Subscription $subscription, array $offer ): bool {
+		$targetId = (int) ( $offer['target_product_id'] ?? 0 );
+
+		if ( $targetId <= 0 || ! class_exists( '\WC_Subscriptions_Switcher' ) ) {
+			return false;
+		}
+
+		return $this->switchToProduct( $subscription, $targetId, 'tier_down' );
+	}
+
+	/**
+	 * Extend the trial period by N days. Only meaningful while the subscription
+	 * is still in its trial; returns false if the trial has already ended so
+	 * the caller can fall through to cancel.
+	 *
+	 * @platform-adapter woocommerce - Phase 2 will mirror this via apps/api/adapters/woocommerce.ts if we move flow execution server-side.
+	 *
+	 * @param array<string, mixed> $offer
+	 */
+	// PLATFORM_ADAPTER: trial extension uses WC Subs date helpers in Phase 1.
+	private function applyExtendTrial( \WC_Subscription $subscription, array $offer ): bool {
+		$trialEnd = $subscription->get_date( 'trial_end' );
+
+		if ( empty( $trialEnd ) || strtotime( $trialEnd ) < time() ) {
+			return false;
+		}
+
+		$days = max( 1, (int) ( $offer['duration_days'] ?? 14 ) );
+		$next = strtotime( "+{$days} days", strtotime( $trialEnd ) );
+
+		if ( ! $next ) {
+			return false;
+		}
+
+		$subscription->update_dates(
+			array(
+				'trial_end'    => gmdate( 'Y-m-d H:i:s', $next ),
+				'next_payment' => gmdate( 'Y-m-d H:i:s', $next ),
+			)
+		);
+
+		return true;
+	}
+
+	/**
+	 * Switch to a different subscription product at the same or different price
+	 * point. Same mechanic as tier_down but framed as a product swap rather than
+	 * a downgrade. Requires `target_product_id`.
+	 *
+	 * @platform-adapter woocommerce - Phase 2 will mirror this via apps/api/adapters/woocommerce.ts if we move flow execution server-side.
+	 *
+	 * @param array<string, mixed> $offer
+	 */
+	// PLATFORM_ADAPTER: product swap uses WC_Subscriptions_Switcher in Phase 1.
+	private function applyProductSwap( \WC_Subscription $subscription, array $offer ): bool {
+		$targetId = (int) ( $offer['target_product_id'] ?? 0 );
+
+		if ( $targetId <= 0 || ! class_exists( '\WC_Subscriptions_Switcher' ) ) {
+			return false;
+		}
+
+		return $this->switchToProduct( $subscription, $targetId, 'product_swap' );
+	}
+
+	/**
+	 * Shared helper for tier_down and product_swap. Replaces the single line
+	 * item on the subscription with the target product's price + line, records
+	 * a note, and leaves status unchanged. If the subscription has multiple
+	 * line items we refuse to switch - that is an ambiguous case that should
+	 * surface as a real decline rather than guessing.
+	 */
+	private function switchToProduct( \WC_Subscription $subscription, int $targetId, string $reason ): bool {
+		$target = wc_get_product( $targetId );
+
+		if ( ! $target ) {
+			return false;
+		}
+
+		$items = $subscription->get_items();
+
+		if ( count( $items ) !== 1 ) {
+			return false;
+		}
+
+		$itemId = array_key_first( $items );
+		$item   = $items[ $itemId ];
+
+		// Replace the product on the existing line item rather than removing and
+		// re-adding, so user-facing line-item id + meta references (gift notes,
+		// per-item attributes) stay intact where possible.
+		$item->set_product( $target );
+		$item->set_name( $target->get_name() );
+		$item->set_subtotal( (float) $target->get_price() );
+		$item->set_total( (float) $target->get_price() );
+		$item->save();
+
+		$subscription->calculate_totals();
+		$subscription->save();
+
+		$subscription->add_order_note(
+			sprintf(
+				/* translators: 1: product name, 2: reason slug */
+				__( 'ChurnStop %2$s save: switched to %1$s.', 'churnstop' ),
+				$target->get_name(),
+				$reason
+			)
+		);
+
+		return true;
 	}
 
 	/**

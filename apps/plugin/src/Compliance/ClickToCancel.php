@@ -47,6 +47,45 @@ final class ClickToCancel {
 			$violations[] = __( 'Completing cancellation must be one click from any save-offer screen.', 'churnstop' );
 		}
 
+		// Rule 5: support routing must not replace cancel. If any conditional
+		// offer for a reason is of type support_route AND the configuration
+		// flags that route as blocking (no decline-and-cancel link), reject.
+		if ( ! empty( $config['support_route_blocks_cancel'] ) ) {
+			$violations[] = __( 'Support routing cannot replace the cancel path. The "No thanks, cancel my subscription" link must remain visible on the support-route screen.', 'churnstop' );
+		}
+
+		// Rule 5 (secondary): open-text follow-up cannot be required unless a
+		// reason has been selected in the same step. A required follow-up in
+		// combination with no pre-validated reason read as forcing the customer
+		// to produce content before they can proceed to cancel, which fails
+		// the "no more steps than signup" test.
+		if ( ! empty( $config['open_text_required'] ) && empty( $config['open_text_followup'] ) ) {
+			$violations[] = __( 'An open-text follow-up cannot be required unless the follow-up is also enabled. Either turn on "open_text_followup" or turn off "open_text_required".', 'churnstop' );
+		}
+
+		/**
+		 * Extra custom compliance checks. Bind to append site-specific rules
+		 * (industry regulations, state-specific cancellation-notice rules).
+		 * Each validator receives the full config and returns an array of
+		 * violation strings; an empty array means pass.
+		 *
+		 * Built-in validators cannot be removed via this filter - only added to.
+		 *
+		 * @param array<string, callable> $validators Map of name => callable.
+		 */
+		$extra = apply_filters( 'churnstop_compliance_validators', array() );
+
+		if ( is_array( $extra ) ) {
+			foreach ( $extra as $name => $validator ) {
+				if ( is_callable( $validator ) ) {
+					$result = $validator( $config );
+					if ( is_array( $result ) ) {
+						$violations = array_merge( $violations, array_map( 'strval', $result ) );
+					}
+				}
+			}
+		}
+
 		return $violations;
 	}
 
