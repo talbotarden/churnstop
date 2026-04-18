@@ -36,7 +36,7 @@ Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add cond
 
 - [About](https://churnstop.org/about): Why ChurnStop exists, who it is built for, and product philosophy
 - [GitHub](https://github.com/talbotarden/churnstop): Open-source plugin code (GPL-2.0-or-later)
-- [wordpress.org listing](https://wordpress.org/plugins/churnstop/): Free-tier plugin download and changelog
+- [Direct plugin download](https://churnstop.org/downloads/churnstop.zip): churnstop.zip for manual install. wordpress.org listing is pending review and will replace this link once approved.
 
 ## Optional
 

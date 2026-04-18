@@ -47,6 +47,11 @@ export const metadata = {
 
 # How to build a 30-day winback sequence that works
 
+<div className="mt-6 mb-2 rounded-xl border border-strong surface px-5 py-4 text-[14px]">
+  <strong className="text-[var(--fg)]">Implementation note.</strong>{' '}
+  The winback automation described in this post is on the ChurnStop roadmap for a Growth-tier release. The template and measurement approach below work with any transactional email tool in the meantime (Postmark, SES, SendGrid, Klaviyo, Mailchimp Transactional). ChurnStop's <code>churnstop_cancellation_resolved</code> action hook fires today and is the right trigger for a custom sequence built in your own email provider.
+</div>
+
 **A three-email winback sequence sent at 7, 21, and 60 days after cancellation typically recovers 4-8% of churned subscribers for WooCommerce stores. Top performers clear 10%. The sequence that works is short, specific, and offer-bearing: a personal check-in, a product-update prompt, and a one-time discount to reactivate. Longer sequences saturate and start producing unsubscribes faster than winbacks.**
 
 Winback is the second-chance equivalent of the save flow. Where the save flow intercepts customers before they cancel, winback reaches them after. The two are complementary - a good save flow at 30% catches the easy saves; winback then recovers 4-8% of the customers who cancelled despite the offer. Combined, you recover about a third of cancel intent. Neither alone comes close.

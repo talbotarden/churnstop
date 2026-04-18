@@ -23,12 +23,12 @@ export const faqItems: FaqItem[] = [
   {
     question: 'How much does ChurnStop cost?',
     answer:
-      'ChurnStop has four tiers: Free on wordpress.org, Starter at $79/month (preserves up to $10k MRR), Growth at $199/month (up to $50k MRR, adds cohort analytics and winback emails), and Agency at $399/month (unlimited MRR, white-label and multi-site). All paid tiers include a 14-day free trial and save 20% when billed annually.',
+      'ChurnStop has four tiers: Free (direct download today, wordpress.org listing pending review), Starter at $79/month (preserves up to $10k MRR), Growth at $199/month (up to $50k MRR, adds cohort analytics and winback emails, both on the roadmap), and Agency at $399/month (unlimited MRR, white-label and multi-site, both on the roadmap). Paid-tier checkout opens once the wordpress.org listing is approved and Stripe billing is wired; join the waitlist at churnstop.org/pricing#waitlist to be notified.',
   },
   {
     question: 'What does the free tier include?',
     answer:
-      'The free tier includes a single-path save flow, discount and pause offers, a save count dashboard, FTC click-to-cancel compliance enforcement, and GDPR data hooks. It runs entirely locally and never makes outbound HTTP calls to ChurnStop servers. Download it from wordpress.org/plugins/churnstop.',
+      'The free tier includes a single-path save flow, discount and pause offers, a save count dashboard, FTC click-to-cancel compliance enforcement, and GDPR data exporter + eraser hooks. It runs entirely locally and never makes outbound HTTP calls to ChurnStop servers. Download it at churnstop.org/downloads/churnstop.zip - the wordpress.org listing is pending review.',
   },
   {
     question: 'Is ChurnStop click-to-cancel compliant?',
@@ -53,7 +53,7 @@ export const faqItems: FaqItem[] = [
   {
     question: 'Can I try it before paying?',
     answer:
-      'Yes. The free tier on wordpress.org ships the core save-flow permanently. Paid tiers include a 14-day free trial with no card required to start. Cancel at any time during the trial with no charge.',
+      'Yes. The free tier is available for direct download today at churnstop.org/downloads/churnstop.zip (wordpress.org listing pending review) and ships the full save-flow, compliance validator, and dashboard. Paid-tier checkout is in pre-launch; join the waitlist at churnstop.org/pricing#waitlist for early access and a first-period discount when Stripe checkout opens.',
   },
   {
     question: 'What happens if the ChurnStop backend is unavailable?',

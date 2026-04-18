@@ -35,7 +35,20 @@ const featuresFaqSchema = {
   })),
 };
 
-const pillars = [
+type Bullet = string | { text: string; status: 'coming-soon' };
+
+type Pillar = {
+  slug: string;
+  eyebrow: string;
+  title: string;
+  oneLine: string;
+  body: string;
+  bullets: Bullet[];
+  status?: 'coming-soon';
+  learnMore?: { label: string; href: string };
+};
+
+const pillars: Pillar[] = [
   {
     slug: 'conditional-flows',
     eyebrow: '01',
@@ -56,9 +69,10 @@ const pillars = [
     slug: 'ab-testing',
     eyebrow: '02',
     title: 'A/B testing flows and offers',
+    status: 'coming-soon',
     oneLine:
       'Test different offer amounts, different question wording, different offer ordering. Hold the winner.',
-    body: 'The A/B testing engine randomly assigns cancel attempts to flow variants, records which variant the customer saw, and reports which variant beats the others with statistical significance. Minimum recommended sample is 200 attempts per variant; most stores reach that in 2-6 weeks. When a variant wins decisively (>95% confidence), ChurnStop suggests promoting it to the default flow.',
+    body: 'The A/B testing engine will randomly assign cancel attempts to flow variants, record which variant the customer saw, and report which variant beats the others with statistical significance. Minimum recommended sample is 200 attempts per variant; most stores reach that in 2-6 weeks. When a variant wins decisively (>95% confidence), ChurnStop will suggest promoting it to the default flow. Schema tables for variants and assignments ship in the plugin today; the runtime that reads and writes them lands in a future release.',
     bullets: [
       'Randomized variant assignment at the cancellation-event level',
       'Sticky per subscriber: same subscriber always sees the same variant within a test',
@@ -72,24 +86,25 @@ const pillars = [
     eyebrow: '03',
     title: 'Save-rate and MRR-preserved analytics',
     oneLine:
-      'One dashboard. Three numbers at the top. Cohort LTV underneath.',
-    body: 'The dashboard leads with MRR preserved this month - the dollar figure that justifies the subscription. Underneath: save rate as a percentage, cancellation attempts in the period, breakdown by cancel reason, breakdown by offer accepted, week-over-week trend line, and top five flows by save rate. Growth tier adds cohort LTV, tracking how much each saved customer is worth over the following 12 months.',
+      'One dashboard. Three numbers at the top.',
+    body: 'The dashboard leads with MRR preserved this month - the dollar figure that justifies the subscription. Underneath: save rate as a percentage, cancellation attempts in the period, breakdown by cancel reason, breakdown by offer accepted, week-over-week trend line, and the event log with filter-by-status plus a running MRR-preserved-in-view total. Cohort LTV is in the roadmap for Growth tier; the supporting schema columns (monthly_value_cents, resolved_at) are already captured on every event.',
     bullets: [
       'MRR preserved this month (the headline dollar figure)',
       'Save rate: % of cancel attempts resolved without cancellation',
       'Cancel reason mix: which reasons are rising, which are falling',
       'Offer performance: which offer type wins by reason bucket',
-      'Cohort LTV (Growth+): 12-month revenue from each saved customer',
-      'Exportable CSV for pasting into Sheets or a BI tool',
+      { text: 'Cohort LTV (Growth+): 12-month revenue from each saved customer', status: 'coming-soon' },
+      'Event log with status filter and running MRR-preserved-in-view total',
     ],
   },
   {
     slug: 'winback',
     eyebrow: '04',
     title: 'Winback email automation',
+    status: 'coming-soon',
     oneLine:
       'For the customers who cancel despite the offer. Send a sequence, not a single email.',
-    body: 'Winback runs on Growth and above. When a customer cancels, ChurnStop queues a configurable sequence - a discount bounce-back, a product-update nudge, a personal check-in - spaced 7, 21, and 60 days after cancellation. Emails send through your existing transactional provider (Postmark, SES, SendGrid) via a WordPress filter; ChurnStop does not route mail through its own servers.',
+    body: 'Winback will run on Growth and above. When a customer cancels, ChurnStop will queue a configurable sequence - a personal check-in, a product-update nudge, a discount bounce-back - spaced 7, 21, and 60 days after cancellation. Emails will send through your existing transactional provider (Postmark, SES, SendGrid) via a WordPress filter; ChurnStop does not route mail through its own servers. The backend worker for the sequence lands with the paid-tier checkout launch.',
     bullets: [
       'Three starter templates plus unlimited custom sequences',
       'Trigger on cancellation reason or offer type declined',
@@ -189,7 +204,14 @@ export default function FeaturesPage() {
         <div className="mx-auto max-w-5xl px-6 py-20 lg:py-28 space-y-28">
           {pillars.map((p) => (
             <section key={p.slug} id={p.slug} className="scroll-mt-24">
-              <div className="eyebrow font-mono tracking-widest">{p.eyebrow}</div>
+              <div className="flex items-center gap-3">
+                <div className="eyebrow font-mono tracking-widest">{p.eyebrow}</div>
+                {p.status === 'coming-soon' ? (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-2 font-medium border border-soft rounded px-1.5 py-0.5">
+                    Coming soon
+                  </span>
+                ) : null}
+              </div>
               <h2 className="mt-3 text-[32px] lg:text-[40px] leading-tight tracking-tightish font-semibold max-w-[20ch]">
                 {p.title}
               </h2>
@@ -201,12 +223,23 @@ export default function FeaturesPage() {
               </p>
 
               <ul className="mt-8 grid sm:grid-cols-2 gap-x-8 gap-y-3 text-[15px]">
-                {p.bullets.map((b) => (
-                  <li key={b} className="flex gap-3">
-                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
-                    <span className="leading-relaxed">{b}</span>
-                  </li>
-                ))}
+                {p.bullets.map((b) => {
+                  const text = typeof b === 'string' ? b : b.text;
+                  const isSoon = typeof b !== 'string' && b.status === 'coming-soon';
+                  return (
+                    <li key={text} className="flex gap-3">
+                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
+                      <span className={`leading-relaxed ${isSoon ? 'text-muted' : ''}`}>
+                        {text}
+                        {isSoon ? (
+                          <span className="ml-2 text-[9px] uppercase tracking-wider text-muted-2 font-medium border border-soft rounded px-1 py-px align-middle">
+                            Soon
+                          </span>
+                        ) : null}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
 
               {p.learnMore ? (

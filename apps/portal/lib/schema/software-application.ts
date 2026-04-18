@@ -50,7 +50,9 @@ export const softwareApplicationSchema = {
         price: '0',
         priceCurrency: 'USD',
         category: 'Free',
-        url: 'https://wordpress.org/plugins/churnstop/',
+        // wordpress.org listing is pending review; direct download is the
+        // canonical free-tier install path until the listing lands.
+        url: `${site.url}/downloads/churnstop.zip`,
       },
       {
         '@type': 'Offer',

@@ -73,7 +73,7 @@ export default function AboutPage() {
         <ul className="mt-5 space-y-2 text-[16px] text-muted leading-relaxed max-w-prose list-disc pl-6 marker:text-muted-2">
           <li>Support and sales: <a href={`mailto:support@${site.domain}`} className="text-accent underline underline-offset-4 hover:no-underline">support@{site.domain}</a></li>
           <li>Source code and issues: <a href="https://github.com/talbotarden/churnstop" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-4 hover:no-underline">github.com/talbotarden/churnstop</a></li>
-          <li>Free-tier download: <a href="https://wordpress.org/plugins/churnstop/" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-4 hover:no-underline">wordpress.org/plugins/churnstop</a></li>
+          <li>Free-tier download: <a href="/downloads/churnstop.zip" className="text-accent underline underline-offset-4 hover:no-underline">churnstop.zip direct</a> (wordpress.org listing pending review)</li>
         </ul>
       </main>
     </>

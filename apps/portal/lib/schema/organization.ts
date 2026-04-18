@@ -22,10 +22,11 @@ export const organizationSchema = {
   },
   image: `${site.url}/og/churnstop-logo.png`,
   description:
-    'ChurnStop is a WordPress plugin for WooCommerce Subscriptions that intercepts subscription cancellations with a conditional save flow. Free tier on wordpress.org; paid tiers add branching flows, A/B testing, cohort analytics, and winback automation.',
+    'ChurnStop is a WordPress plugin for WooCommerce Subscriptions that intercepts subscription cancellations with a conditional save flow. Free tier via direct download today; the wordpress.org listing is pending review. Paid tiers adding A/B testing, cohort analytics, and winback automation are on the roadmap.',
   foundingDate: '2026',
+  // sameAs lists only URLs that resolve today. wordpress.org listing is
+  // pending review; add when approved.
   sameAs: [
-    'https://wordpress.org/plugins/churnstop/',
     'https://github.com/talbotarden/churnstop',
   ],
   contactPoint: {

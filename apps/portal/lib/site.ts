@@ -18,7 +18,10 @@ export const site = {
       href: '/downloads/churnstop.zip',
     },
     startTrial: {
-      label: 'Start 14-day trial',
+      // Label is "See pricing" rather than "Start 14-day trial" because the
+      // paid tier checkout flow is not yet live. /pricing now carries a
+      // #waitlist section the button lands on.
+      label: 'See pricing',
       href: '/pricing',
     },
   },
