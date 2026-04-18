@@ -11,16 +11,18 @@ export function Nav() {
           className="flex items-center"
           aria-label={`${site.name} home`}
         >
-          {/* Logo wordmark, trimmed to its bounding box (397x107, ~3.7:1). */}
-          {/* Rendered at 32px tall in the nav (~119px wide at source ratio). */}
-          {/* priority=true so it appears in first paint with no layout shift. */}
+          {/* Brand wordmark, pre-cropped asset at 413x120 (~3.4:1). Rendered */}
+          {/* at 32px tall in the nav (~110px wide at source ratio). priority */}
+          {/* so it appears in first paint with no layout shift. Colors are */}
+          {/* preserved as-delivered (no dark:invert); the mark is designed to */}
+          {/* read on light and dark backgrounds without modification. */}
           <Image
             src="/churnstop-logo.png"
             alt={site.name}
-            width={397}
-            height={107}
+            width={413}
+            height={120}
             priority
-            className="h-8 w-auto dark:invert"
+            className="h-8 w-auto"
           />
         </Link>
 
