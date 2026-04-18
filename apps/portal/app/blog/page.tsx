@@ -16,13 +16,6 @@ const breadcrumbSchema = buildBreadcrumbSchema([
   { name: 'Blog', path: '/blog' },
 ]);
 
-const plannedPosts = [
-  'The click-to-cancel rule, explained for WooCommerce',
-  'Pause vs discount: which offer saves more cancels',
-  'How to build a 30-day winback sequence that works',
-  'Save-flow best practices: the one-question rule',
-];
-
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -74,18 +67,6 @@ export default function BlogPage() {
             </ul>
           </section>
         ) : null}
-
-        <section className="mt-16">
-          <h2 className="text-[22px] tracking-tightish font-semibold">Planned</h2>
-          <p className="mt-3 text-muted max-w-prose text-[15px]">
-            Roughly in the order these will ship:
-          </p>
-          <ul className="mt-5 space-y-2 text-[15px] text-muted list-disc pl-6 marker:text-muted-2">
-            {plannedPosts.map((title) => (
-              <li key={title}>{title}</li>
-            ))}
-          </ul>
-        </section>
 
         <section className="mt-16 rounded-xl border border-strong surface px-8 py-8">
           <h2 className="text-xl font-semibold tracking-tightish">Want to be notified?</h2>

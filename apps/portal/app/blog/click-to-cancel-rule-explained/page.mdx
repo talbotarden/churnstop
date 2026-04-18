@@ -1,0 +1,150 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getPost } from '@/lib/blog';
+
+export const metadata = {
+  title: 'The click-to-cancel rule, explained for WooCommerce',
+  description:
+    'The FTC click-to-cancel rule has been in effect since May 2025. Most WooCommerce Subscriptions stores that added a save flow before then are non-compliant. Here is the 10-minute audit.',
+  alternates: { canonical: '/blog/click-to-cancel-rule-explained' },
+};
+
+{(() => {
+  const post = getPost('click-to-cancel-rule-explained');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    publishedAt: post.publishedAt,
+    updatedAt: post.updatedAt ?? post.publishedAt,
+    authorName: post.author,
+    keywords: post.keywords,
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<div className="mx-auto max-w-3xl px-6 py-20">
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/blog" className="hover:text-[var(--fg)]">Blog</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>The click-to-cancel rule, explained for WooCommerce</span>
+</nav>
+
+<div className="eyebrow">Compliance · 8 min read · April 11, 2026</div>
+
+# The click-to-cancel rule, explained for WooCommerce
+
+**The FTC click-to-cancel rule took effect in May 2025. If you run WooCommerce Subscriptions and added any save flow before then - a retention popup, a "contact support" redirect, a multi-step offer page - your current setup is probably non-compliant. Civil penalties run up to $50,120 per violation per consumer. The good news: a compliance audit takes about 10 minutes and the fix is usually a 10-minute configuration change.**
+
+This post walks through the audit. If you prefer the full rule-by-rule breakdown as a reference, the <Link href="/click-to-cancel">click-to-cancel pillar page</Link> covers the five requirements and ChurnStop's validator in detail.
+
+## What the rule actually says
+
+The FTC's amended Negative Option Rule (16 CFR Part 425), informally called the click-to-cancel rule, took effect May 14, 2025. The substance is narrow and specific:
+
+1. Cancellation must be available online for subscriptions signed up online.
+2. Cancellation must take no more steps than sign-up.
+3. The cancellation option must be at least as prominent as the retention option.
+4. Save offers may be shown but cannot block or disguise the path to cancel.
+5. Cancellation status must be clearly confirmed after the fact.
+
+Each one has enforcement precedent. State analogues (California BPC 17600, New York GBL 527-a, Florida 501.0551) extend the federal floor with additional disclosure and notice requirements. WooCommerce Subscriptions stores are subject to the federal rule regardless of where they are hosted, as long as they sell to US consumers.
+
+## Why most WooCommerce save flows fail
+
+The typical pre-2025 WooCommerce save flow was built as a popup or a redirect before WC Subs' native cancel page. It worked something like this:
+
+1. Customer clicks Cancel on `/my-account/subscriptions/`
+2. Popup appears: "Are you sure? Here is a 20% discount."
+3. Customer clicks "No thanks"
+4. Redirect to "Wait, one more thing - contact support first"
+5. Email form or chat widget
+6. Eventually, native cancel completes
+
+That is a clear rule violation. The cancellation path has gone from one click (click Cancel, click confirm on WC Subs' native page) to four or five. The cancel option is visually de-emphasized relative to the retention offer. Support contact is the only gate on certain paths.
+
+If your current setup matches any part of that description, you have a compliance exposure.
+
+## The 10-minute audit
+
+Here is what to check on your own store. Open a fresh incognito window, log in as a test subscriber, and go to the My Account page. Click Cancel on an active subscription.
+
+### Check 1 - How many clicks from "Cancel" to cancellation done
+
+Count clicks starting from the Cancel button. Compliant flows complete cancellation in one click from any screen in the save flow. If you count two or more clicks where each click requires an active choice (not just passing through a confirmation), you are over budget.
+
+Watch especially for: confirmation dialogs ("Are you sure?"), extra survey steps after the first one, offer escalation chains ("no thanks" -> "how about 30% instead?"), and post-offer "please tell us why" required follow-ups.
+
+### Check 2 - Cancel option prominence
+
+The cancel option must be at least as prominent as the retention action. "Prominent" is not defined precisely but the FTC has cited: font size, contrast, position, and visual weight.
+
+Specifically fails: cancel as a small grey text link below a primary-colored "Keep subscription" button. Specifically fails: cancel hidden behind a dropdown or "other options" toggle. Specifically fails: cancel rendered as a link when the retention action is rendered as a button.
+
+Compliant pattern: cancel and retention are both buttons or both links, at the same size, same relative prominence. If you want the retention action visually preferred, the gap cannot be dramatic enough that a reasonable customer would fail to see the cancel option.
+
+### Check 3 - Support routing
+
+If any cancel reason routes the customer to a support form, chat, or phone queue as the only next step, you fail. Support may be offered alongside cancellation but cannot replace it.
+
+Look specifically for: "Technical issue" reasons that route only to a support ticket with no cancel option. "Billing dispute" reasons that require a phone call before cancellation is allowed. Any "account team will reach out" path that delays the cancellation commitment.
+
+Compliant pattern: support is an optional path shown next to the cancel path. The customer can pick either. Neither blocks the other.
+
+### Check 4 - Post-cancel state
+
+After the customer completes the cancel flow, what happens? The rule requires a clear confirmation that cancellation succeeded. It also prohibits "pending cancellation" limbo where billing continues for a period after the customer thought they cancelled.
+
+Specifically: if your store keeps a cancelled subscription in "active" or "pending-cancel" status and continues to bill until the end of the current period without explicit customer assent to the delayed cancel, you have a problem. The compliant pattern is either: (a) cancel immediately, stop billing immediately, or (b) cancel at period end with an explicit screen during the flow that says "your subscription will remain active until [date], then cancel" and gets affirmative consent.
+
+WooCommerce Subscriptions' native cancel-at-period-end is compliant when the customer sees that disclosure. Custom flows that hide it are not.
+
+### Check 5 - Audit trail
+
+The rule does not explicitly require an audit trail, but state attorneys general looking at ROSCA violations routinely request one. You should be able to show, per cancelled subscription: when the customer first clicked cancel, what they saw, what they clicked through, when cancellation was recorded, and whether billing continued after that point.
+
+If you cannot produce this on demand, your eventual response to a regulator will be: "we don't know what happened in this case." That is the worst position to be in.
+
+## The fix
+
+If your flow fails any of the five checks, the fix is usually one of three:
+
+1. **Switch to a compliance-aware save flow**. The free ChurnStop plugin on wordpress.org ships the validator; it refuses to save any configuration that fails the five checks above. Install it, delete your custom retention popup, and be compliant in 15 minutes.
+2. **Rewrite your custom flow to the compliant pattern**. Doable but surprisingly fiddly; the interactions between WC Subs lifecycle hooks, scheduled actions for end-of-period cancellation, and your own popup markup all have to be coordinated.
+3. **Remove the save flow entirely**. Revert to the native WC Subs cancel. You lose the save rate but you are unambiguously compliant. For low-volume stores this is often the right choice until a proper save flow is ready.
+
+Option 1 is the fastest if you want to keep a save flow running. ChurnStop's free tier is specifically designed for this case and makes no outbound HTTP calls, so it fits in any compliance posture.
+
+## What changed in the year since May 2025
+
+The rule has been in effect for ~11 months. Most enforcement activity in the first year has focused on large subscription merchants (streaming, SaaS, gym memberships) rather than small-to-mid-market WooCommerce stores. But two things have changed the exposure profile:
+
+- **State attorneys general have become active.** California, New York, and Florida have all brought ROSCA-related enforcement actions against mid-market subscription merchants since May 2025. Federal attention follows state complaints.
+- **Class-action posture has sharpened.** Several law firms now advertise for class representatives on subscription-cancellation complaints. The practical threshold for "being noticed" has dropped.
+
+If you have been assuming the rule applies to Netflix but not to your $29k MRR WooCommerce store, that calculation has quietly flipped. It is worth taking the 10 minutes.
+
+## What's next
+
+- <Link href="/click-to-cancel">Click-to-cancel compliance pillar</Link> for the full rule-by-rule breakdown and the code-level specifics of how ChurnStop's validator works.
+- <Link href="/docs/getting-started">Getting started with ChurnStop</Link> if the fix you picked is install the free plugin.
+- <Link href="/blog/woocommerce-churn-benchmarks">WooCommerce churn benchmarks</Link> if you want to know what your save rate should look like once the compliance fix is in place.
+
+---
+
+*This post summarises the federal FTC click-to-cancel rule and common patterns of non-compliance. It is not legal advice. Merchants subject to stricter state analogues or industry-specific regulations should consult counsel before launch.*
+
+</div>

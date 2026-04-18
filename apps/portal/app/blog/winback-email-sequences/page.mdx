@@ -1,0 +1,198 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getPost } from '@/lib/blog';
+
+export const metadata = {
+  title: 'How to build a 30-day winback sequence that works',
+  description:
+    'A three-email winback sequence at 7, 21, and 60 days after cancellation typically recovers 4-8% of churned subscribers. Here is the template: subject lines, timing, offer pattern, and what to measure.',
+  alternates: { canonical: '/blog/winback-email-sequences' },
+};
+
+{(() => {
+  const post = getPost('winback-email-sequences');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    publishedAt: post.publishedAt,
+    updatedAt: post.updatedAt ?? post.publishedAt,
+    authorName: post.author,
+    keywords: post.keywords,
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<div className="mx-auto max-w-3xl px-6 py-20">
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/blog" className="hover:text-[var(--fg)]">Blog</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>How to build a 30-day winback sequence</span>
+</nav>
+
+<div className="eyebrow">Winback · 9 min read · March 21, 2026</div>
+
+# How to build a 30-day winback sequence that works
+
+**A three-email winback sequence sent at 7, 21, and 60 days after cancellation typically recovers 4-8% of churned subscribers for WooCommerce stores. Top performers clear 10%. The sequence that works is short, specific, and offer-bearing: a personal check-in, a product-update prompt, and a one-time discount to reactivate. Longer sequences saturate and start producing unsubscribes faster than winbacks.**
+
+Winback is the second-chance equivalent of the save flow. Where the save flow intercepts customers before they cancel, winback reaches them after. The two are complementary - a good save flow at 30% catches the easy saves; winback then recovers 4-8% of the customers who cancelled despite the offer. Combined, you recover about a third of cancel intent. Neither alone comes close.
+
+## The three-email sequence
+
+Timing is more important than creative. The pattern that works across subscription boxes, memberships, SaaS-on-WooCommerce, and replenishment is:
+
+| Day | Purpose | Contains |
+|---|---|---|
+| +7 | Personal check-in | No offer. Short email asking if everything was OK. |
+| +21 | Product update | New-feature or new-product highlight with a reactivate CTA. |
+| +60 | Reactivation offer | Time-limited discount to reactivate at 20-30% off first 1-3 cycles. |
+
+Day 7 is early enough that the cancellation is still fresh and the customer hasn't fully onboarded to a competitor. Day 21 gives them time to feel the absence. Day 60 is the last chance before the customer has permanently moved on; anything after 90 is close to cold-acquisition territory and should be handled through that channel, not winback.
+
+## Day 7 - the no-offer check-in
+
+This email does not try to save the customer. It asks how the cancellation experience was and whether there's anything the store could have done differently. The goal is to get a reply, not to drive a click.
+
+Template subject lines that produce replies in WC Subs stores:
+
+- "Quick question about your [product name] cancellation"
+- "What did we miss?"
+- "One thing I wanted to ask before you go"
+
+Body (keep under 90 words):
+
+> Hi [first name],
+>
+> I saw you cancelled your [product name] subscription last week. I'm [founder name / support lead], and I wanted to ask - was there something specific we could have done better?
+>
+> If you have a minute to reply, I read every one. No offer, no sales pitch, just trying to understand what to fix.
+>
+> Thanks,
+> [signature]
+
+What this email actually does is surface the 10-15% of cancels that were driven by a product issue you can fix cheaply (a bug, a missing feature, a poor onboarding moment). Replies are high-value - both for fixing the product and for reactivating the specific customer who replied.
+
+Do not put a discount in this email. It reads as bait-and-switch ("the personal check-in was a setup for the offer") and kills reply rate.
+
+## Day 21 - the product update
+
+Twenty-one days after cancel, send a normal-feeling product announcement. New feature, new product, significant update. If you do not have one, do not fake one - ship this email when you genuinely have something.
+
+Template subject lines:
+
+- "[Product name] update: [one-phrase summary]"
+- "What's new since you left"
+- "Shipped this month"
+
+Body (keep under 150 words):
+
+> Hi [first name],
+>
+> A few things shipped since you cancelled:
+>
+> - [Specific thing 1]: one-sentence description
+> - [Specific thing 2]: one-sentence description
+> - [Specific thing 3]: one-sentence description
+>
+> If any of this changes the equation for you, your old subscription settings are still in place - you can reactivate in one click at [link]. No pressure either way.
+>
+> [signature]
+
+Two small things matter:
+
+1. **"Your old subscription settings are still in place"**. Reactivation is cheaper than signup for the customer. Reminding them lowers the friction.
+2. **"No pressure either way"**. Standard sales copy would omit this. In winback, it increases conversions because the customer is reminded they're not being pushed.
+
+Reactivate links should bounce to an account page with one-click reactivation, not to a pricing page. Sending a former customer to /pricing after they already knew what your prices were is a loss of context.
+
+## Day 60 - the reactivation offer
+
+Final email. Time-limited discount. This is the one with teeth.
+
+Template subject lines:
+
+- "One-time offer to come back - 30% off for 3 months"
+- "If you'll give us another shot"
+- "This is the offer, then we'll stop asking"
+
+Body (keep under 120 words):
+
+> Hi [first name],
+>
+> We've been trying not to spam you, so this is the last email like this. If you want to come back, here's a one-time offer: [X]% off your first [N] cycles on any plan. Use code [CODE] by [date 14 days out].
+>
+> [Reactivate link]
+>
+> After that we'll stop asking. Thanks either way.
+>
+> [signature]
+
+Three things that matter:
+
+1. **"This is the last email"**. Honest framing. Customers who know this is the last outreach are more likely to act. Customers who suspect it's the start of an endless sequence will unsubscribe first.
+2. **14-day expiry**. Short enough to feel real. 7 days is too short (creates pressure that reads as manipulative); 30 days is too long (urgency evaporates).
+3. **Discount, not pause**. For reactivation, pause does not apply - the subscription is already cancelled. Tier-down works for some products ("come back to the cheaper plan"). Discount is the most universally applicable.
+
+## What to measure
+
+Four numbers per cohort per month:
+
+- **Reactivation rate**: % of customers who cancelled in cohort N who reactivated during the winback window (days 7-60 after cancel).
+- **Revenue recovered**: sum of monthly value of reactivated subscribers for the first 3 months post-reactivation.
+- **Unsubscribe rate per email**: opt-outs divided by recipients. Target under 2% per email. Above 3% usually means too frequent or wrong timing.
+- **Reply rate on day 7**: raw reply count to the personal check-in. This is your qualitative signal; track it even if the numbers are small.
+
+Beware: reactivation rate depends heavily on how permissive "reactivation" is. If your store treats any resubscribe within 90 days as a reactivation, your number will look better than a store that only counts reactivations from the specific email link. Standardize the measurement before comparing to benchmarks.
+
+## Implementation in WooCommerce
+
+If you are running ChurnStop on Growth or Agency, winback is a built-in feature configured from the admin UI. The plugin listens to the `subscription_cancelled` hook and schedules the three emails via a cron event per subscriber. Emails send through your existing WordPress transactional provider (Postmark, SES, SendGrid, Mailgun); ChurnStop does not route mail.
+
+If you are rolling your own, the essential components:
+
+1. **A hook listener on WC Subs cancellation events** that captures (user_id, subscription_id, cancel_reason, cancel_date, monthly_value).
+2. **A cron event queue** that schedules the three emails at +7, +21, +60 days.
+3. **Stop-rules**: if the customer resubscribes before a scheduled email fires, skip subsequent emails. If the customer clicks unsubscribe on any email, skip subsequent emails. If the customer is on a do-not-contact list (GDPR erasure, CCPA opt-out), skip the entire sequence.
+4. **Tracking**: the reactivate link should carry a UTM that identifies the email, so reactivations can be attributed back to the specific email that produced them.
+
+Budget 1-2 days to build it properly. The failure modes (sending winback to a resubscribed customer, sending after an unsubscribe) are embarrassing and easy to trip if you skip the stop-rules.
+
+## What NOT to do
+
+Three patterns that underperform:
+
+- **Daily or weekly emails in the first 30 days**. Saturation, unsubscribes spike. Three emails spread over 60 days beats five emails over 14 days in every test I've seen.
+- **Automated "we miss you" with no specifics**. Empty emotional appeals without a concrete offer or update do not move the number. The day-7 check-in works because it's from a human asking a question, not because it's a "we miss you" card.
+- **Aggressive discounts (50%+) on day 7**. Customers who just cancelled respond to a 50% discount on day 7 with suspicion ("if they could do that, why were they charging me full price?"). Save the discount for day 60 when time has passed.
+
+## When to turn winback off
+
+Winback is not universally positive. Categories where it underperforms:
+
+- Low-LTV, low-margin products (a $5/mo plan barely justifies the email cost plus admin time).
+- Regulated subscriptions (gym, insurance) where the winback offer can create compliance issues.
+- Highly considered-purchase products where the cancel decision was deliberate and weeks of consideration went into it; these customers reactivate rarely and resent the chasing.
+
+For the common WooCommerce categories (boxes, memberships, SaaS, replenishment), winback at 4-8% reactivation rate is a meaningful lift on the cancellation churn number. Ship it.
+
+## What's next
+
+- <Link href="/blog/woocommerce-churn-benchmarks">WooCommerce churn benchmarks</Link> for the full picture of where winback fits (roughly 4-8% recovery on cancellations, layered on top of 20-35% save rate from the cancel-flow).
+- <Link href="/blog/one-question-rule">The one-question rule</Link> for why the day-7 personal check-in has no radio buttons or forms.
+- <Link href="/pricing">Pricing</Link> - winback automation requires Growth or above because it needs cron scheduling, sequence state, and integration with the merchant's transactional email provider.
+
+</div>

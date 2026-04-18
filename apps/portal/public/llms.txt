@@ -27,6 +27,10 @@ Free tier runs entirely locally with no outbound HTTP calls. Paid tiers add cond
 
 - [Blog index](https://churnstop.org/blog): Subscription retention, WooCommerce churn data, save-flow best practices, FTC click-to-cancel updates
 - [WooCommerce subscription churn benchmarks](https://churnstop.org/blog/woocommerce-churn-benchmarks): What a normal save rate looks like by category (subscription boxes 35-45%, memberships 25-35%, SaaS 20-30%, replenishment 40-55%), sourced from Churnkey 2024, Recurly 2024, and ProsperStack case studies. Includes the worked math at $20k MRR.
+- [The click-to-cancel rule, explained for WooCommerce](https://churnstop.org/blog/click-to-cancel-rule-explained): What the May 2025 FTC rule requires, the five rule checks every WooCommerce save flow must pass, the 10-minute self-audit, and the three paths to remediation.
+- [Pause vs discount: which offer saves more cancellations](https://churnstop.org/blog/pause-vs-discount): Pause offers save more subscribers on save rate, discount offers preserve more revenue per save. Full reason-to-offer routing table and guardrails on offer sizing.
+- [Save-flow best practices: the one-question rule](https://churnstop.org/blog/one-question-rule): Every additional required question drops save rate by about 6.7% (Churnkey 2024). Ask one question, make everything else optional, put customer research in a different channel.
+- [How to build a 30-day winback sequence that works](https://churnstop.org/blog/winback-email-sequences): The 7-day / 21-day / 60-day winback email sequence template with subject lines, body copy, and the four numbers to measure per cohort. 4-8% typical reactivation rate.
 
 ## About
 

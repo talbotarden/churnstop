@@ -1,0 +1,129 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getPost } from '@/lib/blog';
+
+export const metadata = {
+  title: 'Save-flow best practices: the one-question rule',
+  description:
+    'Every additional question in a cancel-flow survey drops save rate by roughly 6.7%, per Churnkey 2024. One required question, optional open-text follow-up, no escalation. Here is why asking less works.',
+  alternates: { canonical: '/blog/one-question-rule' },
+};
+
+{(() => {
+  const post = getPost('one-question-rule');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    publishedAt: post.publishedAt,
+    updatedAt: post.updatedAt ?? post.publishedAt,
+    authorName: post.author,
+    keywords: post.keywords,
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<div className="mx-auto max-w-3xl px-6 py-20">
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/blog" className="hover:text-[var(--fg)]">Blog</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>The one-question rule</span>
+</nav>
+
+<div className="eyebrow">Best practices · 6 min read · March 28, 2026</div>
+
+# Save-flow best practices: the one-question rule
+
+**Ask one required question. Make everything else optional. Every additional required question in a cancel-flow survey drops save rate by roughly 6.7%, per Churnkey's 2024 benchmarks report. A five-question survey has about a 71% worse completion rate than a one-question survey. Worse: multi-question surveys signal to the customer that you are stalling them, which sharpens their intent to cancel.**
+
+This is the shortest post on the blog, because the rule is short. The rest of this post is why the rule holds, how to implement it in WooCommerce, and where to put the questions you actually wanted to ask.
+
+## The Churnkey number
+
+Churnkey analyzed 3,000+ customer save flows and found that survey completion rate drops about 6.7% per additional required question. Applied as compounding decay:
+
+| Required questions | Relative completion |
+|---|---|
+| 1 | 100% |
+| 2 | ~93% |
+| 3 | ~87% |
+| 4 | ~81% |
+| 5 | ~76% |
+
+Completion rate compounds through the funnel. A customer who abandons the survey never sees the offer, so they never get a chance to be saved. A 76% survey completion rate on a flow with a 30% save-given-offer rate yields an overall save rate of about 23%, compared with 30% for the one-question flow. That is a 23% reduction in saves, driven entirely by friction.
+
+## Why more questions feel right but aren't
+
+There is a persistent intuition that longer surveys produce better data, and better data produces better offers. The data does not support this for cancel flows specifically, for three reasons:
+
+1. **Cancel-intent customers are already low-patience.** They've clicked cancel. They want to be gone. Every additional field pushes them toward closing the tab, which leaves the subscription in an ambiguous state and does nothing for your data anyway.
+2. **The first question is almost always enough to route the offer.** "Why are you cancelling?" with five to seven reason buckets gives you 80% of the signal you need. The second question ("what did you like most about the product?") gives you 10% more signal. The third question gives you noise.
+3. **The extra questions are usually for the merchant, not the customer.** Product managers love exit surveys because they feel cheap and easy. But the cost is paid by save rate, and the "insight" recovered is usually low-quality because cancel-flow answers are famously honest only in the free-text field, which you do not need a long survey to capture.
+
+## What to ask
+
+The single required question should be: why are you cancelling? Six or seven options, tuned to your product:
+
+- Too expensive
+- Too busy / not using enough
+- Switching to a competitor
+- Technical issues
+- No longer need it
+- Never used it / wasn't for me
+- Other (with optional open text)
+
+That is it. The reason bucket is what routes the offer, and the reason bucket is what matters for aggregate analytics ("30% of cancels are 'too busy', should we build better onboarding?").
+
+## The optional open-text trick
+
+Put a single optional textarea after the radio selection. Label it "anything else? (optional)". Do not require it.
+
+Two things happen:
+
+1. Customers who are genuinely leaving because of a specific problem will type a sentence. You get qualitative detail on the real reasons, unbiased by radio-button buckets.
+2. Customers who just want to be gone leave it empty. Completion rate is unaffected because the field is optional.
+
+You get both the survey-completion advantage of a one-question flow and the qualitative insight of a long survey. The trick is that the long-survey format was always optional-quality signal; formalizing it as optional text gets you the same signal without the survey-length penalty.
+
+## Required open-text is a trap
+
+Some stores make the open-text follow-up required. The intuition: we really want to know why. The reality: you have reintroduced a required question, which drops completion by the same ~6.7%. Worse, customers who refuse to type a sentence will now type gibberish ("adsf", ".") to satisfy the required field, and your qualitative data gets polluted by noise.
+
+Leave the textarea optional. If a customer cares enough to explain, they will. If they don't, you still got the reason bucket.
+
+## Where to put the questions you wanted to ask
+
+Customer research questions belong in customer research, not in a cancel flow. Three good alternatives:
+
+- **Post-cancellation email, 48 hours later.** "Sorry to see you go. If you have 60 seconds, we'd love to understand what could have been better." One question, thoughtful framing. Response rate is higher than you expect because the customer is no longer in cancel-anxiety mode.
+- **Active-customer surveys via in-app intercepts.** If you want to know what features matter, ask customers who are still paying you. They have context.
+- **Winback sequence touchpoints.** A winback email 21 or 60 days after cancellation, offering a deeper conversation ("happy to get on a call if you want to share what we could fix") produces actual conversations with former customers, which is an order of magnitude more valuable than any exit survey question.
+
+The cancel flow's job is to save the customer. It is not the right tool for customer research. Keep them separate.
+
+## Implementation in ChurnStop
+
+The ChurnStop settings page enforces the one-question rule by default. The survey step takes the reason radio options list and a single toggle for "optional open-text follow-up". There is no UI to add a second required question because we think making that easy would harm customers we have never met.
+
+If you are running ChurnStop and your save rate is lower than expected, check the settings first: is there a second required question lurking in the flow? Is the open-text follow-up marked required when it should be optional? Those are the most common misconfigurations.
+
+## What's next
+
+- <Link href="/blog/pause-vs-discount">Pause vs discount</Link> - once the survey is short, you need the right offer per reason.
+- <Link href="/docs/getting-started">Getting started</Link> - the default ChurnStop flow ships with one required question and an optional follow-up. The default is the answer.
+- <Link href="/click-to-cancel">Click-to-cancel compliance</Link> - an extra required question can push your flow past the "no more steps than signup" FTC threshold.
+
+</div>

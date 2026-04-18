@@ -1,0 +1,143 @@
+import Link from 'next/link';
+import { JsonLd } from '@/components/json-ld';
+import { buildBreadcrumbSchema } from '@/lib/schema/breadcrumb';
+import { buildArticleSchema } from '@/lib/schema/article';
+import { getPost } from '@/lib/blog';
+
+export const metadata = {
+  title: 'Pause vs discount: which offer saves more cancellations',
+  description:
+    'Pause offers typically save more subscribers than discount offers on WooCommerce stores, but discount wins on revenue preserved per save. The right call depends on your cancel reason mix and your LTV math. Here is the decision framework.',
+  alternates: { canonical: '/blog/pause-vs-discount' },
+};
+
+{(() => {
+  const post = getPost('pause-vs-discount');
+  const breadcrumb = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog' },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+  const article = buildArticleSchema({
+    title: post.title,
+    description: post.description,
+    slug: post.slug,
+    publishedAt: post.publishedAt,
+    updatedAt: post.updatedAt ?? post.publishedAt,
+    authorName: post.author,
+    keywords: post.keywords,
+  });
+  return <>
+    <JsonLd id="ld-breadcrumb" schema={breadcrumb} />
+    <JsonLd id="ld-article" schema={article} />
+  </>;
+})()}
+
+<div className="mx-auto max-w-3xl px-6 py-20">
+
+<nav className="text-xs text-muted-2 mb-6" aria-label="Breadcrumb">
+  <Link href="/" className="hover:text-[var(--fg)]">Home</Link>
+  <span aria-hidden className="px-2">/</span>
+  <Link href="/blog" className="hover:text-[var(--fg)]">Blog</Link>
+  <span aria-hidden className="px-2">/</span>
+  <span>Pause vs discount: which offer saves more cancellations</span>
+</nav>
+
+<div className="eyebrow">Offer strategy · 10 min read · April 4, 2026</div>
+
+# Pause vs discount: which offer saves more cancellations
+
+**Pause offers typically save 35-45% of cancel attempts where the reason is time-related ("too busy", "not using enough"). Discount offers typically save 25-35% of cancel attempts where the reason is price-related ("too expensive", "found a cheaper alternative"). Pause wins on save rate because the underlying issue is reversible; discount wins on revenue preserved per save because it keeps billing intact. Stores that route by reason do both.**
+
+The argument "pause vs discount, which should I offer" is the wrong framing. The right framing is "which reason gets which offer, and what happens when you let the customer pick". The data splits cleanly once you segment by cancellation reason.
+
+## The numbers, honestly
+
+Before quoting specific figures: the only public benchmarks in this space come from Churnkey (2024 report), ProsperStack (case studies on their site), and Recurly's State of Subscriptions. All three lean SaaS and Shopify; WooCommerce-specific data is thinner. What follows is synthesized from those sources plus the early ChurnStop install cohort (n under 20 as of April 2026, so treat these as directional).
+
+| Reason | Pause save rate | Discount save rate | Typical winner |
+|---|---|---|---|
+| Too busy / not using | 35-45% | 15-20% | Pause |
+| Too expensive | 12-18% | 25-35% | Discount |
+| Switching competitor | 10-15% | 20-30% | Discount (or tier-down) |
+| Technical issues | 5% | 5% | Neither (route to support) |
+| No longer need it | 15-25% | 10-15% | Pause (buys evaluation time) |
+| Other / unstated | 15-25% | 20-28% | Mixed; test |
+
+Ranges widen across stores because offer sizing matters. A 10% discount saves less than a 30% discount. A 14-day pause saves less than a 90-day pause. Both also cost more, in different currencies.
+
+## Why pause wins on save rate
+
+Pause offers solve a time problem by giving the customer time. No price concession, no renegotiation, no LTV hit. For the "too busy" reason specifically, the customer's underlying issue is temporary and the pause acknowledges that. When the pause ends, billing resumes at full price and in most cases the customer stays - the reason for cancellation was situational, not values-based.
+
+Pause also has an unusual property: customers often never actually use the pause. They accept it, feel heard, and then forget about it. When the pause ends, they remain subscribed because the pain that triggered the cancel click has passed. This is why pause-save-then-long-retention is a consistent pattern across categories.
+
+## Why discount wins on revenue preserved per save
+
+A pause saves the subscriber but pauses billing for N days. If you pause for 60 days, you lose 2 months of revenue on that subscriber even if they stay. A 25% discount for 3 renewals keeps the subscriber paying at 75% of full price for 3 months, then returns to full price.
+
+Worked math on a $49/mo subscription:
+
+| Scenario | Revenue next 90 days | Retention after 90d |
+|---|---|---|
+| Cancel | $0 | gone |
+| 60-day pause accepted | $49 (one renewal after pause ends) | typically strong |
+| 25% discount for 3 cycles | $110.25 | typically strong |
+| Full price retained (no save flow needed) | $147 | baseline |
+
+On a per-save basis, discount preserves roughly 2.2x the near-term revenue that a 60-day pause does. Over 12 months the gap narrows because the discount ends and the pause-accepted subscriber returns to full price, but for cohort LTV analysis in the first two quarters, discount looks better on the P&L.
+
+## What this means in practice
+
+Three rules from the combined data:
+
+1. **Never use pause for "too expensive".** It is the wrong problem. Customers who say "too expensive" and accept a pause come back after the pause and cancel again. The save is temporary and costly.
+2. **Never use discount for "too busy".** The customer is not telling you about price. A discount is a gratuitous concession on revenue that does not solve the underlying issue. Many customers decline the discount and cancel anyway because the concession feels off-topic.
+3. **Route "technical issues" out of the save flow entirely.** Offer support, not an offer. FTC-compliant stores do this anyway because routing cancel-intent customers to support queues without an easy cancel option is a rule violation. And discount + pause are not what these customers need.
+
+## Offer sizing
+
+More discount is not always better. A 50% discount for 6 cycles sounds generous but has two problems:
+
+- **It undermines your pricing signal.** Existing customers who hear their neighbours got a 50% retention discount will ask for one too. You end up discounting a large slice of your book unintentionally.
+- **It trains cancellation behaviour.** Customers who learn that cancelling triggers a discount will game the system. Shopify merchants have reported measurable increases in "cancel-and-return" behaviour within 90 days of increasing retention discounts past 30%.
+
+Safe bands for WooCommerce stores, per our sources:
+
+- Discount: 15-25% for 2-4 cycles. Larger stores may go up to 30%. Anything above 35% creates the training-behaviour problem.
+- Pause: 30-60 days. Shorter pauses underperform because the situational problem hasn't resolved. Longer pauses hurt LTV without improving save rate meaningfully.
+
+## When to offer both
+
+Some save flows let the customer pick from multiple offers on the same screen. The data on this is mixed:
+
+- Pro: higher save rate because the customer finds the offer that matches their mental model of why they want to cancel.
+- Con: higher revenue impact because customers pick the largest concession available (typically the pause, because "free" beats "partial payment") even when a discount would have been enough to save them.
+
+The cleaner pattern is route by reason. Show one offer, the one most likely to work for the reason they picked. If they decline, go straight to cancel. The FTC rule also reads this pattern more comfortably than a multi-offer "here are your options" page, which can look like an obstruction.
+
+## Tier-down, skip-renewal, extend-trial
+
+These are the other three offer types ChurnStop ships. Brief notes on each:
+
+- **Tier-down** saves customers who want to stay but can't afford the current plan. Works only if you have a lower tier in the same product family. Save rate is similar to discount for the "too expensive" reason, with lower LTV impact because the customer is paying a lower price forever instead of a discount on a higher price for a few cycles.
+- **Skip-next-renewal** is underrated for annual plans. On monthly plans it is effectively a one-month pause but without the status change, which is a safer behaviour in stores where product access is tied to subscription status. Save rate 25-35% on annual plans.
+- **Extend-trial** only applies to customers still in their trial period. Very high save rate (50%+) but tiny population. Worth having when the population exists; not worth prioritising.
+
+## The decision framework
+
+If you have to pick one offer to ship first on a store that currently has no save flow:
+
+- **Subscription box or replenishment store**: pause. Reasons skew toward supply-piled-up and life-event; pause is the highest save rate in these categories.
+- **SaaS-on-WooCommerce**: discount. Reasons skew toward price comparison and value questioning; discount is the most direct answer.
+- **Membership or content site**: conditional - discount for "too expensive", pause for "too busy", tier-down for "no longer need this tier". Ship all three if you are on Starter or above.
+
+If you are already running one offer and want to add a second: add the opposite of what you have. The marginal save rate of adding a complementary offer type is bigger than the marginal save rate of increasing the existing offer's size.
+
+## What's next
+
+- <Link href="/docs/offer-types">Offer types reference</Link> for the technical parameters of each offer and which native WC Subs API they call.
+- <Link href="/blog/woocommerce-churn-benchmarks">WooCommerce churn benchmarks</Link> for save-rate ceilings by category (replenishment 40-55%, memberships 25-35%, SaaS-on-WC 20-30%).
+- <Link href="/pricing">Pricing</Link> - conditional branching by reason requires Starter or above; the free tier ships discount + pause as a single-path flow.
+
+</div>

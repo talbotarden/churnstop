@@ -38,6 +38,10 @@ Submit each of these URLs to https://search.google.com/test/rich-results and rec
 | https://churnstop.org/docs/api | [ ] | |
 | https://churnstop.org/blog | [ ] | |
 | https://churnstop.org/blog/woocommerce-churn-benchmarks | [ ] | |
+| https://churnstop.org/blog/click-to-cancel-rule-explained | [ ] | |
+| https://churnstop.org/blog/pause-vs-discount | [ ] | |
+| https://churnstop.org/blog/one-question-rule | [ ] | |
+| https://churnstop.org/blog/winback-email-sequences | [ ] | |
 | https://churnstop.org/about | [ ] | |
 
 (Legal stubs `/terms`, `/privacy`, `/account` are intentionally excluded; Google does not surface legal pages in rich results and `/account` is `noindex`.)
