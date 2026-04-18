@@ -8,6 +8,13 @@
       "when": 1776486897448,
       "tag": "0000_cuddly_spyke",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776548421974,
+      "tag": "0001_add_heartbeats",
+      "breakpoints": true
     }
   ]
 }

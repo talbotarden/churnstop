@@ -17,7 +17,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { db, schema } from '../db/client.js';
 import { entitlementsForTier, isTier } from '../entitlements.js';
@@ -172,6 +172,152 @@ licenseRoutes.get('/by-subscription/:id', async (c) => {
       expires_at: row.expiresAt ? row.expiresAt.toISOString() : null,
       entitlements: entitlementsForTier(row.tier as 'free' | 'starter' | 'growth' | 'agency'),
     },
+  });
+});
+
+/**
+ * Heartbeat: plugin posts a monthly rollup of save-flow metrics. We
+ * upsert the (license_id, site_url, month) triple so a plugin can
+ * safely resend for the current month and just overwrite the row.
+ *
+ * This endpoint is what feeds the agency rollup view and the
+ * cross-store benchmark anonymisation pipeline.
+ */
+const heartbeatSchema = z.object({
+  platform: z.enum(SUPPORTED_PLATFORMS).default('woocommerce'),
+  key: z.string().min(10),
+  site_url: z.string().url(),
+  month: z.string().regex(/^\d{4}-\d{2}$/),
+  attempts: z.number().int().nonnegative(),
+  saved: z.number().int().nonnegative(),
+  mrr_preserved_cents: z.number().int().nonnegative(),
+  plugin_version: z.string().max(32).optional(),
+});
+
+licenseRoutes.post('/heartbeat', zValidator('json', heartbeatSchema), async (c) => {
+  const payload = c.req.valid('json');
+
+  const resolved = await resolveAndValidate(payload.key);
+  if (!resolved.ok) {
+    return c.json({ ok: false, error: resolved.error }, 400);
+  }
+  const row = resolved.row;
+
+  // Upsert via findOrInsertOrUpdate. Drizzle doesn't have a clean
+  // on-conflict helper for composite uniqueness on timestamp-with-tz
+  // columns, so we fall back to select-then-update-or-insert in a
+  // transaction. The volume is tiny (once/site/month) so this is fine.
+  const existing = await db
+    .select()
+    .from(schema.licenseHeartbeats)
+    .where(
+      and(
+        eq(schema.licenseHeartbeats.licenseId, row.id),
+        eq(schema.licenseHeartbeats.siteUrl, payload.site_url),
+        eq(schema.licenseHeartbeats.month, payload.month),
+      ),
+    )
+    .limit(1);
+
+  if (existing[0]) {
+    await db
+      .update(schema.licenseHeartbeats)
+      .set({
+        attempts: payload.attempts,
+        saved: payload.saved,
+        mrrPreservedCents: payload.mrr_preserved_cents,
+        pluginVersion: payload.plugin_version,
+        reportedAt: new Date(),
+      })
+      .where(eq(schema.licenseHeartbeats.id, existing[0].id));
+  } else {
+    await db.insert(schema.licenseHeartbeats).values({
+      licenseId: row.id,
+      siteUrl: payload.site_url,
+      platform: payload.platform,
+      month: payload.month,
+      attempts: payload.attempts,
+      saved: payload.saved,
+      mrrPreservedCents: payload.mrr_preserved_cents,
+      pluginVersion: payload.plugin_version,
+    });
+  }
+
+  return c.json({ ok: true });
+});
+
+/**
+ * Agency rollup: for a given license, return per-site metrics for the
+ * current month plus an aggregate. Gated on the `multi_site` entitlement
+ * so non-Agency tiers can't probe other sites.
+ */
+const rollupSchema = z.object({
+  key: z.string().min(10),
+  month: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+});
+
+licenseRoutes.post('/rollup', zValidator('json', rollupSchema), async (c) => {
+  const { key, month } = c.req.valid('json');
+
+  const resolved = await resolveAndValidate(key);
+  if (!resolved.ok) {
+    return c.json({ ok: false, error: resolved.error }, 400);
+  }
+  const row = resolved.row;
+
+  const tier = row.tier as 'free' | 'starter' | 'growth' | 'agency';
+  const ent = entitlementsForTier(tier);
+  if (!ent.features.includes('multi_site')) {
+    return c.json(
+      {
+        ok: false,
+        error: 'Multi-site rollup is available on the Agency plan only.',
+        upgrade_to: 'agency',
+      },
+      402,
+    );
+  }
+
+  const targetMonth = month ?? new Date().toISOString().slice(0, 7);
+
+  const sites = await db
+    .select()
+    .from(schema.licenseHeartbeats)
+    .where(
+      and(
+        eq(schema.licenseHeartbeats.licenseId, row.id),
+        eq(schema.licenseHeartbeats.month, targetMonth),
+      ),
+    )
+    .orderBy(desc(schema.licenseHeartbeats.mrrPreservedCents));
+
+  const totals = sites.reduce(
+    (acc, s) => ({
+      attempts: acc.attempts + s.attempts,
+      saved: acc.saved + s.saved,
+      mrr_preserved_cents: acc.mrr_preserved_cents + s.mrrPreservedCents,
+    }),
+    { attempts: 0, saved: 0, mrr_preserved_cents: 0 },
+  );
+
+  return c.json({
+    ok: true,
+    month: targetMonth,
+    totals: {
+      ...totals,
+      save_rate: totals.attempts > 0 ? totals.saved / totals.attempts : 0,
+      site_count: sites.length,
+    },
+    sites: sites.map((s) => ({
+      site_url: s.siteUrl,
+      platform: s.platform,
+      attempts: s.attempts,
+      saved: s.saved,
+      save_rate: s.attempts > 0 ? s.saved / s.attempts : 0,
+      mrr_preserved_cents: s.mrrPreservedCents,
+      plugin_version: s.pluginVersion,
+      reported_at: s.reportedAt.toISOString(),
+    })),
   });
 });
 

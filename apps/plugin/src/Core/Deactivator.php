@@ -12,5 +12,6 @@ final class Deactivator {
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( 'churnstop_license_refresh' );
 		wp_clear_scheduled_hook( 'churnstop_winback_tick' );
+		wp_clear_scheduled_hook( 'churnstop_multisite_heartbeat' );
 	}
 }

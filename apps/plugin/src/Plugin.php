@@ -11,6 +11,7 @@ use ChurnStop\Core\Container;
 use ChurnStop\Experiments\AbTestManager;
 use ChurnStop\Flow\FlowEngine;
 use ChurnStop\License\LicenseManager;
+use ChurnStop\MultiSite\MultiSiteReporter;
 use ChurnStop\Privacy\DataSubjectHandlers;
 use ChurnStop\Rest\RestRoutes;
 use ChurnStop\Subscriptions\CancellationInterceptor;
@@ -63,6 +64,7 @@ final class Plugin {
 		( new WinbackScheduler( $license ) )->register();
 		( new WinbackSender( $license ) )->register();
 		( new UnsubscribeHandler( $license ) )->register();
+		( new MultiSiteReporter( $license ) )->register();
 		$whiteLabel->register();
 
 		// Load translations.

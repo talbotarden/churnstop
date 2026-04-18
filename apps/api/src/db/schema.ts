@@ -34,6 +34,31 @@ export const benchmarkIngest = pgTable('benchmark_ingest', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Multi-site heartbeats. Each plugin install pushes a monthly rollup of
+ * save-flow metrics. Keyed on (license_id, site_url, month) so a site
+ * can safely resend the same month and just overwrite the latest values.
+ */
+export const licenseHeartbeats = pgTable(
+  'license_heartbeats',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    licenseId: uuid('license_id').notNull(),
+    siteUrl: text('site_url').notNull(),
+    platform: text('platform').notNull().default('woocommerce'),
+    month: text('month').notNull(), // YYYY-MM
+    attempts: integer('attempts').notNull().default(0),
+    saved: integer('saved').notNull().default(0),
+    mrrPreservedCents: integer('mrr_preserved_cents').notNull().default(0),
+    pluginVersion: text('plugin_version'),
+    reportedAt: timestamp('reported_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    byLicenseMonth: index('idx_hb_license_month').on(t.licenseId, t.month),
+    uniq: index('idx_hb_unique').on(t.licenseId, t.siteUrl, t.month),
+  }),
+);
+
 export const winbackJobs = pgTable('winback_jobs', {
   id: uuid('id').primaryKey().defaultRandom(),
   licenseId: uuid('license_id').notNull(),
