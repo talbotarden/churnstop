@@ -9,6 +9,8 @@ use ChurnStop\Core\Settings;
 use ChurnStop\Experiments\AbTestManager;
 use ChurnStop\Flow\FlowEngine;
 use ChurnStop\License\LicenseManager;
+use ChurnStop\Winback\WinbackScheduler;
+use ChurnStop\Winback\WinbackSequence;
 
 /**
  * REST API endpoints consumed by the React admin UI.
@@ -153,6 +155,26 @@ final class RestRoutes {
 						'sanitize_callback' => 'absint',
 					),
 				),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/winback/sequence',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'winbackSequence' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
+			)
+		);
+
+		register_rest_route(
+			'churnstop/v1',
+			'/winback/queue',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'winbackQueue' ),
+				'permission_callback' => array( $this, 'permissionCheck' ),
 			)
 		);
 
@@ -307,6 +329,63 @@ final class RestRoutes {
 		$this->abTest->stopTest( (int) $request->get_param( 'id' ) );
 
 		return rest_ensure_response( array( 'ok' => true ) );
+	}
+
+	public function winbackSequence(): \WP_REST_Response {
+		if ( ! $this->license->has( WinbackScheduler::FEATURE ) ) {
+			return new \WP_REST_Response(
+				array(
+					'error'   => 'winback_not_licensed',
+					'message' => __( 'Winback automation requires a Growth plan or higher.', 'churnstop' ),
+				),
+				402
+			);
+		}
+
+		return rest_ensure_response(
+			array(
+				'sequence' => WinbackSequence::steps(),
+			)
+		);
+	}
+
+	public function winbackQueue(): \WP_REST_Response {
+		if ( ! $this->license->has( WinbackScheduler::FEATURE ) ) {
+			return new \WP_REST_Response(
+				array( 'error' => 'winback_not_licensed' ),
+				402
+			);
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . WinbackScheduler::TABLE_QUEUE;
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT id, cancellation_event_id, recipient_email, step_number, subject, status, send_at, sent_at, error_msg
+			 FROM {$table}
+			 ORDER BY send_at DESC
+			 LIMIT 100",
+			ARRAY_A
+		) ?: array();
+
+		$counts = $wpdb->get_results(
+			"SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status",
+			ARRAY_A
+		) ?: array();
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$summary = array();
+		foreach ( $counts as $row ) {
+			$summary[ (string) $row['status'] ] = (int) $row['n'];
+		}
+
+		return rest_ensure_response(
+			array(
+				'queue'   => $rows,
+				'summary' => $summary,
+			)
+		);
 	}
 
 	public function cohortLtv( \WP_REST_Request $request ): \WP_REST_Response {

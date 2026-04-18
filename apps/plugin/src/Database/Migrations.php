@@ -13,7 +13,7 @@ final class Migrations {
 
 	private const DB_VERSION_OPTION = 'churnstop_db_version';
 
-	private const CURRENT_VERSION = '2';
+	private const CURRENT_VERSION = '3';
 
 	public static function run(): void {
 		global $wpdb;
@@ -114,6 +114,33 @@ final class Migrations {
             PRIMARY KEY (id),
             KEY test_id (test_id),
             KEY user_test (user_id, test_id)
+        ) $charset;";
+
+		$statements[] = "CREATE TABLE {$prefix}churnstop_winback_queue (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            cancellation_event_id BIGINT UNSIGNED NOT NULL,
+            recipient_email VARCHAR(190) NOT NULL,
+            step_number INT UNSIGNED NOT NULL,
+            subject VARCHAR(255) NOT NULL,
+            body LONGTEXT NOT NULL,
+            send_at DATETIME NOT NULL,
+            status VARCHAR(16) NOT NULL DEFAULT 'queued',
+            sent_at DATETIME DEFAULT NULL,
+            error_msg TEXT DEFAULT NULL,
+            unsubscribe_token CHAR(32) NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            KEY status_send_at (status, send_at),
+            KEY event_step (cancellation_event_id, step_number),
+            KEY unsubscribe_token (unsubscribe_token)
+        ) $charset;";
+
+		$statements[] = "CREATE TABLE {$prefix}churnstop_winback_unsubscribes (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            email VARCHAR(190) NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
         ) $charset;";
 
 		foreach ( $statements as $sql ) {

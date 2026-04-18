@@ -13,6 +13,9 @@ use ChurnStop\License\LicenseManager;
 use ChurnStop\Privacy\DataSubjectHandlers;
 use ChurnStop\Rest\RestRoutes;
 use ChurnStop\Subscriptions\CancellationInterceptor;
+use ChurnStop\Winback\UnsubscribeHandler;
+use ChurnStop\Winback\WinbackScheduler;
+use ChurnStop\Winback\WinbackSender;
 
 /**
  * Main plugin bootstrap. Singleton pattern; wires the subsystems together.
@@ -54,6 +57,9 @@ final class Plugin {
 		( new Admin( $license, $flowEngine ) )->register();
 		( new RestRoutes( $flowEngine, $license, $abTest, $cohortLtv ) )->register();
 		( new DataSubjectHandlers() )->register();
+		( new WinbackScheduler( $license ) )->register();
+		( new WinbackSender( $license ) )->register();
+		( new UnsubscribeHandler( $license ) )->register();
 
 		// Load translations.
 		add_action(

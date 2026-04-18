@@ -10,6 +10,7 @@ import { Logs } from './screens/Logs';
 import { License } from './screens/License';
 import { AbTests } from './screens/AbTests';
 import { Analytics } from './screens/Analytics';
+import { Winback } from './screens/Winback';
 
 declare const ChurnStopAdmin: {
   apiUrl: string;
@@ -33,7 +34,7 @@ function App() {
     case 'churnstop-ab':
       return h(AbTests, null);
     case 'churnstop-winback':
-      return h(Placeholder, { title: 'Winback', body: 'Email sequences for customers who declined all offers. Paid tier feature.' });
+      return h(Winback, null);
     case 'churnstop-logs':
       return h(Logs, null);
     case 'churnstop-license':
